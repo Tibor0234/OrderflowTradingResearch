@@ -12,6 +12,7 @@ from analyzers.volume_delta.cumulative_analyzer import CVDAnalyzer
 from analyzers.volume_profile.analyzer import VolumeProfileAnalyzer
 from analyzers.ohlcv_timeframe.analyzer import OHLCVTimeframeAnalyzer, OHLCVPeriod
 from analyzers.ohlcv_volume_profile.analyzer import OHLCVVolumeProfileAnalyzer
+from analyzers.news.analyzer import NewsAnalyzer
 
 # Strategies
 from strategies.executable.test import TestStrategy
@@ -55,6 +56,8 @@ class ResourceConfig:
                 OHLCVPeriod.LAST_WEEK
             ),
             "ohlcv_1w_vp": OHLCVVolumeProfileAnalyzer(),
+
+            "news": NewsAnalyzer(),
         }
 
     @staticmethod

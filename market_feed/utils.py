@@ -15,6 +15,7 @@ class SessionCounter:
     """Stores session and session-pair replay progress."""
     
     session: int | None
+    session_number: int
     symbol: str | None
     pair: int
     session_pair: int

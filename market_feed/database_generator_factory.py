@@ -152,5 +152,25 @@ class DatabaseGeneratorFactory:
             cursor.close()
 
     def news_generator(self, session_pair_id):
-        """Return a generator for news data of the specified session pair."""
-        return iter([])
+        """Stream news data for the specified session pair."""
+        cursor = self.conn.cursor(
+            name=f"news_cursor_{session_pair_id}"
+        )
+        cursor.itersize = 500
+        try:
+            cursor.execute("""
+                SELECT external_id, timestamp, category, headline, summary
+                FROM news
+                WHERE session_pair_id = %s
+                ORDER BY timestamp
+            """, (session_pair_id,))
+            for external_id, timestamp, category, headline, summary in cursor:
+                yield {
+                    "external_id": external_id,
+                    "time": int(timestamp.timestamp() * 1000),
+                    "category": category,
+                    "headline": headline,
+                    "summary": summary,
+                }
+        finally:
+            cursor.close()

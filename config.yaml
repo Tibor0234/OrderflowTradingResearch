@@ -2,10 +2,10 @@
 # Market symbols and session ranges to process.
 symbols:
 
-sessions_numbers:
-  - 2
+session_ids:
 
-# Initial account balance and exchange fees in percent.
+
+# Initial account balance in USD and exchange fees in percent.
 starting_balance: 100000
 
 maker_fee_rate: 0.02
@@ -27,9 +27,15 @@ statistics:
 
 # Report and machine learning export settings.
 reports:
-  enabled: true
+  enabled: false
   export_shadow_trades: false
 
 ml_export:
-  enabled: true
+  enabled: false
+  directory: D:/OrderflowML/data/trades
   schema_version: 1
+
+# news settings
+news:
+  db_path: news_analysis.db
+  ai_model: qwen3:4b

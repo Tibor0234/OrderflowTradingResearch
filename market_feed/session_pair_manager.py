@@ -23,6 +23,7 @@ class SessionPairManager:
         self.all_session_pair_counts = self._load_all_session_pair_counts()
         self.counter = SessionCounter(
             session=None,
+            session_number=0,
             symbol=None,
             pair=0,
             session_pair=0,
@@ -152,6 +153,8 @@ class SessionPairManager:
         _, session_id, symbol, _ = session_pair
 
         self.counter.pair = self.counter.pair + 1 if self.counter.session == session_id else 1
+        if self.counter.session != session_id:
+            self.counter.session_number += 1
         self.counter.session = session_id
         self.counter.symbol = symbol.upper()
         self.counter.total_pairs = self.all_session_pair_counts[session_id]

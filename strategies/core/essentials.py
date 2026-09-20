@@ -13,6 +13,7 @@ from analyzers.ohlcv_volume_profile.model import OHLCVVolumeProfile
 from analyzers.timeframe.model import Timeframe
 from analyzers.volume_delta.model import VolumeDelta
 from analyzers.volume_profile.model import VolumeProfile
+from analyzers.news.model import News
 
 __all__ = [
 	"Decimal",
@@ -26,4 +27,5 @@ __all__ = [
 	"Timeframe",
 	"VolumeDelta",
 	"VolumeProfile",
+	"News",
 ]

@@ -46,6 +46,7 @@ from visualizers.data_analysis.equity_curve import EquityCurveVisualizer
 from visualizers.data_analysis.statistics import StatisticsVisualizer
 from visualizers.price_chart.base import PriceChartVisualizer
 from visualizers.context_chart.base import ContextChartVisualizer
+from visualizers.news_panel.news import NewsVisualizer
 
 # ---- User config ----
 from resource_config import ResourceConfig
@@ -55,11 +56,12 @@ if __name__ == "__main__":
     with open("config.yaml", encoding="utf-8") as config_file:
         config = yaml.safe_load(config_file)
 
+    dotenv.load_dotenv()
+
     # ---- Essentials ----
     resource_config = ResourceConfig()
     strategy, resources, visualizers = resource_config.get_essentials()
 
-    dotenv.load_dotenv()
     run_started_at = datetime.now()
 
     # ---- Dashboard ----
@@ -115,7 +117,7 @@ if __name__ == "__main__":
         trade_manager,
         news_manager,
         ohlcv_manager,
-        session_numbers=config.get("sessions_numbers", []),
+        session_numbers=config.get("session_ids", []),
         symbols=config.get("symbols", []),
     )
 
@@ -163,6 +165,8 @@ if __name__ == "__main__":
             dashboard.add_price_chart_visualizer(visualizer)
         elif isinstance(visualizer, ContextChartVisualizer):
             dashboard.add_context_chart_visualizer(visualizer)
+        elif isinstance(visualizer, NewsVisualizer):
+            dashboard.set_news_visualizer(visualizer)
 
     # Reports
     reports_config = config.get("reports", {})
@@ -184,9 +188,9 @@ if __name__ == "__main__":
     # Machine-learning export
     ml_export_config = config.get("ml_export", {})
     if ml_export_config.get("enabled", False):
-        ml_data_directory = os.getenv("ML_DATA_DIRECTORY")
+        ml_data_directory = ml_export_config.get("directory")
         if not ml_data_directory:
-            raise ValueError("ML_DATA_DIRECTORY must be set when ML export is enabled.")
+            raise ValueError("ml_export.directory must be set in config.yaml when ML export is enabled.")
 
         MLTradeParquetExporter(
             output_directory=ml_data_directory,

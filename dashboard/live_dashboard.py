@@ -6,6 +6,7 @@ from dashboard.chart_renderer import ChartRenderer
 from dashboard.dashboard_layout import DashboardLayout
 from dashboard.panel_content_renderer import PanelContentRenderer
 from data_managers.ohlcv.utils import OHLCVPeriod
+from visualizers.news_panel.news import NewsVisualizer
 from visualizers.price_chart.base import PriceChartVisualizer
 from visualizers.context_chart.base import ContextChartVisualizer
 from visualizers.market_entity.trade import TradeVisualizer
@@ -33,6 +34,8 @@ class LiveDashboard:
             OHLCVPeriod.LAST_DAY: [],
             OHLCVPeriod.LAST_WEEK: []
         }
+
+        self.news_visualizer = None
 
         self.trade_visualizer = None
         self.order_visualizer = None
@@ -92,6 +95,9 @@ class LiveDashboard:
             ),
             "Cumulative statistics": self.panel_content_renderer.render_stats_panel(
                 self.cumulative_statistics_visualizer
+            ),
+            "News": self.panel_content_renderer.render_news_panel(
+                self.news_visualizer
             )
         }
 
@@ -113,10 +119,12 @@ class LiveDashboard:
             Output("stop-order-panel", "children"),
             Output("session-pair-stats-panel", "children"),
             Output("cumulative-stats-panel", "children"),
+            Output("news-panel", "children"),
             Input("trigger-check", "n_intervals")
         )
         def update(_):
             figures, panels = self._build_dashboard_snapshot()
+            
             return (*figures.values(), *panels.values())
 
     def add_price_chart_visualizer(self, visualizer: PriceChartVisualizer):
@@ -164,6 +172,11 @@ class LiveDashboard:
         """Set the visualizers used for session and cumulative statistics."""
         self.session_pair_statistics_visualizer = session_pair_visualizer
         self.cumulative_statistics_visualizer = cumulative_visualizer
+        return self
+
+    def set_news_visualizer(self, visualizer: NewsVisualizer):
+        """Add a news visualizer to the dashboard."""
+        self.news_visualizer = visualizer
         return self
 
     def run(self, debug=False):

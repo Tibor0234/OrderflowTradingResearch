@@ -12,6 +12,7 @@ class NewsManager(DataManager):
 
     def forward_message(self, msg):
         conv_msg = NewsMessage(
+            external_id=msg["external_id"],
             time=msg["time"],
             category=msg["category"],
             headline=msg["headline"],

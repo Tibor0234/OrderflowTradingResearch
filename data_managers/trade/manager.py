@@ -28,7 +28,8 @@ class TradeManager(DataManager):
             side=Side.SELL if msg["m"] else Side.BUY
         )
 
-        DataProvider().set(msg['s'].upper(), conv_msg.price, conv_msg.time)
+        DataProvider().set_price(conv_msg.price)
+        DataProvider().set_time(conv_msg.time)
         for sub in self.subscribers:
             sub.process_message(conv_msg)
 

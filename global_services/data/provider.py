@@ -20,12 +20,6 @@ class DataProvider:
 
     # setters
 
-    def set(self, symbol: str, price: Decimal, time: int):
-        """Update the current market data."""
-        self.symbol = symbol
-        self.price = price
-        self.time = time
-
     def set_symbol(self, symbol: str):
         """Update the current symbol."""
         self.symbol = symbol

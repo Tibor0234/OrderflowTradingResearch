@@ -6,6 +6,7 @@ from data_managers.order_book.manager import OrderBookManager
 from data_managers.open_interest.manager import OpenInterestManager
 from data_managers.trade.manager import TradeManager
 
+from global_services.data.provider import DataProvider
 from global_services.events.bus import EventBus
 from global_services.events.utils import EventBusMsgType
 
@@ -64,6 +65,8 @@ class MarketFeed:
                 print("Process ended.")
                 EventBus().emit(EventBusMsgType.PROCESS_END)
                 return
+
+            DataProvider().set_symbol(self.session_pair_manager.counter.symbol)
 
             await self._replay_session_pair(session_pair)
 
