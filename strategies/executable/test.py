@@ -7,7 +7,7 @@ class TestStrategy(BaseStrategy):
         if len(vd_1m.history) == 0 or vd_1m.history[-1] is None:
             return
 
-        if not self.fw.is_trade_open():
+        if not self.fw.is_trade_open() and not self.fw.is_order_pending():
 
             if vd_1m.history[-1].value > Decimal(0):
                 self.fw.place_market_order(

@@ -2,7 +2,7 @@ from dash import html
 from trading.market_entities.trade import Trade
 from trading.market_entities.utils import Side
 from visualizers.market_entity.base import MarketEntityVisualizer
-from visualizers.utils import format_number
+from visualizers.utils import format_number, colorize_number
 
 class TradeVisualizer(MarketEntityVisualizer):
     """Visualizes executed trades on the price chart and dashboard."""
@@ -62,12 +62,7 @@ class TradeVisualizer(MarketEntityVisualizer):
 
             pnl_value = float(trade.realized_pnl) + float(trade.floating_pnl)
 
-            pnl = html.Span(
-                format_number(float(f"{pnl_value:.2f}")),
-                style={
-                    "color": "green" if pnl_value >= 0 else "#FF5722"
-                }
-            )
+            pnl = colorize_number(pnl_value, 0)
 
             values.append([side, total_value, pnl])
 

@@ -153,28 +153,28 @@ class StrategyFramework(SequenceAnalyzers):
     # execution queries
 
     def is_trade_open(self):
-        """Return whether an active trade exists."""
+        """Return whether an active non-shadow trade exists."""
         return any(not trade.is_shadow for trade in self.position_manager.trades)
-    
+
     def is_order_pending(self):
-        """Return whether there are any pending orders."""
-        return len(self.position_manager.orders) + len(self.position_manager.increase_orders) > 0
-    
+        """Return whether there are any pending non-shadow orders."""
+        return any(not order.is_shadow for order in self.position_manager.orders + self.position_manager.increase_orders)
+
     def get_trades(self):
-        """Return a copy of the list of active trades."""
-        return self.position_manager.trades.copy()
-    
+        """Return a copy of the active non-shadow trades."""
+        return [trade for trade in self.position_manager.trades if not trade.is_shadow]
+
     def get_orders(self):
-        """Return a copy of the list of pending orders."""
-        return self.position_manager.orders.copy()
-    
+        """Return a copy of the pending non-shadow orders."""
+        return [order for order in self.position_manager.orders if not order.is_shadow]
+
     def get_increase_orders(self, source: Order | Trade):
-        """Return a list of increase orders linked to the given source."""
-        return [o for o in self.position_manager.increase_orders if o.source_id == source.id]
-    
+        """Return non-shadow increase orders linked to the given source."""
+        return [order for order in self.position_manager.increase_orders if order.source_id == source.id and not order.is_shadow]
+
     def get_stop_orders(self, source: Order | Trade):
-        """Return a list of stop orders linked to the given source."""
-        return [o for o in self.position_manager.stop_orders if o.source_id == source.id]
+        """Return non-shadow stop orders linked to the given source."""
+        return [order for order in self.position_manager.stop_orders if order.source_id == source.id and not order.is_shadow]
     
     def get_take_profits(self, source: Order | Trade):
         """Return a list of take profit orders linked to the given source."""

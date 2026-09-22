@@ -89,9 +89,9 @@ class TradeExcelExporter:
     def _format_metadata_value(value):
         """Convert a trade metadata value to an Excel-compatible representation."""
         if isinstance(value, Decimal):
-            return round(float(value), 5)
+            return round(float(value), 4)
         if value is None or isinstance(value, (str, int, bool)):
             return value
         if isinstance(value, float):
-            return round(value, 5)
+            return round(value, 4)
         return str(value)

@@ -17,10 +17,16 @@ def format_number(num):
 
     return str(num)
 
-def colorize_number(value, min_value, is_percentage=False):
+def colorize_number(value, min_value, is_percentage=False, reversed=False):
     """Format a value and color it based on a specified threshold."""
     num = float(value)
-    color = "#4CAF50" if num >= min_value else "#FF5722"
+
+    meets_threshold = num >= min_value
+
+    if reversed:
+        meets_threshold = not meets_threshold
+
+    color = "#4CAF50" if meets_threshold else "#FF5722"
 
     if is_percentage:
         text = f"{num:.2%}"

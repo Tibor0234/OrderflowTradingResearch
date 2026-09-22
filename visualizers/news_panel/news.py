@@ -1,5 +1,5 @@
 from analyzers.news.model import News
-from visualizers.utils import colorize_number
+from visualizers.utils import format_number, colorize_number
 
 class NewsVisualizer:
     def __init__(self, model):
@@ -17,9 +17,9 @@ class NewsVisualizer:
 
         values = [
             colorize_number(float(features.sentiment), min_value=0),
-            colorize_number(float(features.severity), min_value=0.5),
-            colorize_number(float(features.market_relevance), min_value=0.5),
-            colorize_number(float(features.symbol_relevance), min_value=0.5),
+            format_number(float(features.severity)),
+            format_number(float(features.market_relevance)),
+            format_number(float(features.symbol_relevance)),
         ]
 
         return categories, values

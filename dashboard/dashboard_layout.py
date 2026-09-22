@@ -91,7 +91,7 @@ class DashboardLayout:
                 html.Div(
                     id="news-panel",
                     style={
-                        "flex": "1.5",
+                        "flex": "2",
                         "padding": "10px",
                         "borderTop": "1px solid #333",
                         "backgroundColor": "#232323"

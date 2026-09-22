@@ -19,27 +19,33 @@ class PanelContentRenderer:
     def render_news_panel(self, news_visualizer: NewsVisualizer):
         """Render news data as an HTML table and headline list."""
         if news_visualizer is None:
-            return html.Div()
+            return html.Div( "News", style={"textAlign": "center", "paddingBottom": "4px", "fontWeight": "bold"} )
 
         categories, values = news_visualizer.get_aggregated_features()
         headlines = news_visualizer.get_headlines()
 
-        return html.Div([
-            html.Table([
-                html.Thead(
-                    html.Tr([
-                        html.Th(cat, style={"padding": "2px 6px", "color": "#aaa", "fontWeight": "bold", "textAlign": "center", "fontSize": "13px"})
-                        for cat in categories
+        return html.Div([ 
+
+            html.Div( "News", style={"textAlign": "center", "paddingBottom": "4px", "fontWeight": "bold"} ),
+
+            html.Div(
+                html.Table([
+                    html.Thead(
+                        html.Tr([
+                            html.Th(cat, style={"padding": "2px 6px", "color": "#aaa", "fontWeight": "bold", "textAlign": "center", "fontSize": "13px"})
+                            for cat in categories
+                        ])
+                    ),
+                    html.Tbody([
+                        html.Tr([
+                            html.Td(val, style={"padding": "2px 6px", "textAlign": "center", "fontSize": "13px"})
+                            for val in values
+                        ])
                     ])
+                ],
+                    style={"width": "100%", "backgroundColor": "#232323", "borderCollapse": "collapse", "margin": "0", "tableLayout": "auto"}
                 ),
-                html.Tbody([
-                    html.Tr([
-                        html.Td(val, style={"padding": "2px 6px", "textAlign": "center", "fontSize": "13px"})
-                        for val in values
-                    ])
-                ])
-            ],
-                style={"width": "100%", "backgroundColor": "#232323", "borderCollapse": "collapse", "margin": "0", "tableLayout": "auto"}
+                style={"paddingBottom": "4px"}
             ),
 
             html.Div([
