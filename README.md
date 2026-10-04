@@ -43,10 +43,6 @@ flowchart LR
     Positions --> Output[Dashboard / Reports / ML Export]
 ```
 
-The main data flow is:
-
-**PostgreSQL → MarketFeed → Data Managers → Analyzers → Strategy → PositionManager → Outputs**
-
 ## Installation
 
 Install the required Python packages:
