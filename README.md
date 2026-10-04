@@ -1,5 +1,7 @@
 # Orderflow Trading Research
 
+This project is the research and backtesting component of a larger market data pipeline.
+
 A research and backtesting framework for processing historical market data in a reproducible and consistent way based on a custom trading strategy, with support for machine learning.
 
 Market data is replayed from a PostgreSQL database in chronological order. Given the same input data and configuration, the strategy produces the same sequence of decisions, making backtests reproducible. Results can be exported to reports and datasets for further ML research.
@@ -31,7 +33,24 @@ Market data is replayed from a PostgreSQL database in chronological order. Given
 
 - **ML Export** – closed real and shadow trades can be exported in Parquet format using a versioned schema for training and evaluating ML models.
 
-## Architecture
+## Data Source
+
+This project uses historical market data collected and stored in PostgreSQL by a separate data collection project.
+
+The collector is responsible for collecting and storing:
+- trades
+- order book data
+- open interest
+- OHLCV data
+- market news
+
+The database itself is not included in this repository due to the size of the historical dataset.
+
+The data collection project is available here:
+
+**[Orderflow Data Collector](https://github.com/Tibor0234/OrderflowDataCollector)**
+
+## Main Data Flow
 
 ```mermaid
 flowchart LR
