@@ -19,7 +19,7 @@ Market data is replayed from a PostgreSQL database in chronological order. Given
   - microprice deviation and order book imbalance
   - AI-based news analysis (`NewsAnalyzer`) using a local Ollama model
 
-- **Strategy** – strategies are located under `strategies/` and inherit from `BaseStrategy`. `StrategyFramework` provides access to analyzers and the order management interface, including market orders and reduce-only orders. Each strategy also requires importing `*`  from `strategies.core.essentials`, which provides access to types, modules, and classes that can be useful when implementing a strategy.
+- **Strategy** – strategies are expected to be located under `strategies/executable` and inherit from `BaseStrategy`. `StrategyFramework` provides access to analyzers and the order management interface, including market orders and reduce-only orders. Each strategy also requires importing `*`  from `strategies.core.essentials`, which provides access to types, modules, and classes that can be useful when implementing a strategy.
 
   Example: [`TestStrategy`](strategies/executable/test.py)
 
