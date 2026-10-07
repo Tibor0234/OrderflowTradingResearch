@@ -19,9 +19,9 @@ Market data is replayed from a PostgreSQL database in chronological order. Given
   - microprice deviation and order book imbalance
   - AI-based news analysis (`NewsAnalyzer`) using a local Ollama model
 
-- **Strategy** – strategies are located under `strategies/` and inherit from `BaseStrategy`. `StrategyFramework` provides access to analyzers and the order management interface, including market orders and reduce-only orders.
+- **Strategy** – strategies are located under `strategies/` and inherit from `BaseStrategy`. `StrategyFramework` provides access to analyzers and the order management interface, including market orders and reduce-only orders. Each strategy also requires importing `*`  from `strategies.core.essentials`, which provides access to types, modules, and classes that can be useful when implementing a strategy.
 
-  Example: [`strategies/executable/test.py`](strategies/executable/test.py)
+  Example: [`TestStrategy`](strategies/executable/test.py)
 
 - **Execution Simulation** – `PositionManager` handles positions, orders, stop orders, maker/taker fees and the initial account balance.
 
@@ -96,13 +96,13 @@ Contains runtime configuration such as:
 - report and ML export settings
 - news analysis settings
 
+If `symbols` or `session_ids` is empty, all available data is processed.
+
 ### `resource_config.py`
 
 Defines the strategy and analyzers used by the framework, including their names and parameters.
 
 Analyzers automatically connect to the nearest compatible previous data source.
-
-If `symbols` or `session_ids` is empty, all available data is processed.
 
 ## Running
 
