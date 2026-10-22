@@ -53,17 +53,17 @@ class BaseVolumeDeltaAnalyzer(PriceChartResource, TimeframeSubscriber):
         delta = msg.quantity * msg.side.value
         self.model.current.value += delta
 
-    def on_candle_close(self, next_time: int | None = None):
+    def on_candle_close(self, next_open: int | None = None):
         """Store the current delta and initialize the next record."""
         if self.model.current is not None:
             self.model.history.append(self.model.current)
 
-        self.model.current = self.new_current_record(next_time)
+        self.model.current = self.new_current_record(next_open)
 
     def get_visualizer(self):
         """Return the visualizer implementation provided by the subclass."""
         raise NotImplementedError("get_visualizer must be implemented")
     
-    def new_current_record(self, next_time: int | None = None):
+    def new_current_record(self, next_open: int | None = None):
         """Create the next current delta record using the subclass implementation."""
         raise NotImplementedError("new_current_record must be implemented")

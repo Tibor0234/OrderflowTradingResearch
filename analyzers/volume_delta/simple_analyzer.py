@@ -22,9 +22,9 @@ class VolumeDeltaAnalyzer(BaseVolumeDeltaAnalyzer):
             return VolumeDeltaVisualizer(self.model, top_pct, self.chart_slot)
         return None
 
-    def new_current_record(self, next_time=None):
+    def new_current_record(self, next_open=None):
         """Create a new volume delta record with a zero starting value."""
         return OscillatorRecord(
-            time=next_time if next_time is not None else 0,
+            time=next_open if next_open is not None else 0,
             value=Decimal(0)
         )

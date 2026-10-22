@@ -12,7 +12,7 @@ from global_services.events.utils import EventBusMsgType
 class TimeframeAnalyzer(PriceChartResource, TradeManagerSubscriber):
     """Analyzes price data over a specified timeframe, generating and updating candles."""
 
-    def __init__(self, candle_seconds, length=200, visualize=True, chart_slot: int | None = None):
+    def __init__(self, candle_seconds=60, length=100, visualize=True, chart_slot: int | None = None):
         """Initialize the timeframe analyzer with the specified candle duration, history length, and visualization options."""
         super().__init__(chart_slot)
         self.model: Timeframe = Timeframe(length)

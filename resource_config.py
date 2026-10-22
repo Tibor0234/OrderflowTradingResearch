@@ -38,14 +38,11 @@ class ResourceConfig:
         # Declare the analyzers, their names, and their settings.
         return {
             "tf_1m": TimeframeAnalyzer(
-                candle_seconds=60
+                candle_seconds=60,
+                length=100
             ),
-            "vd_1m": VolumeDeltaAnalyzer(),
-
-            "tf_5m": TimeframeAnalyzer(
-                candle_seconds=300
-            ),
-            "vd_5m": VolumeDeltaAnalyzer(),
+            "cvd_1m": CVDAnalyzer(),
+            "vp_1m": VolumeProfileAnalyzer(length=100),
 
             "ohlcv_1d": OHLCVTimeframeAnalyzer(
                 OHLCVPeriod.LAST_DAY
@@ -56,8 +53,6 @@ class ResourceConfig:
                 OHLCVPeriod.LAST_WEEK
             ),
             "ohlcv_1w_vp": OHLCVVolumeProfileAnalyzer(),
-
-            "news": NewsAnalyzer(),
         }
 
     @staticmethod
@@ -86,8 +81,10 @@ class ResourceConfig:
         for index, current in enumerate(resource_list):
             self._subscribe_to_source(current, resource_list[:index])
 
-            if hasattr(current, "visualizer") and current.visualizer is not None:
-                visualizers.append(current.visualizer)
+            if inspect.getattr_static(current, "visualizer", None) is not None:
+                visualizer = current.visualizer
+                if visualizer is not None:
+                    visualizers.append(visualizer)
 
         return visualizers
 

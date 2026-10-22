@@ -9,14 +9,14 @@ from analyzers.utils import OscillatorRecord
 class OpenInterestAnalyzer(PriceChartResource, OpenInterestManagerSubscriber):
     """Analyzes open interest data and maintains its historical aggregation."""
 
-    def __init__(self, aggregation_minutes, length=200, visualize=True, chart_slot: int | None = None):
+    def __init__(self, agg_minutes=1, length=100, visualize=True, chart_slot: int | None = None):
         super().__init__(chart_slot)
         """Initialize the open interest analyzer with the specified aggregation period and visualization settings."""
-        if aggregation_minutes < 1:
+        if agg_minutes < 1:
             raise ValueError("aggregation_minutes must be at least 1")
 
         self.model: OpenInterest = OpenInterest(length)
-        self.aggregation_minutes = aggregation_minutes
+        self.aggregation_minutes = agg_minutes
         self._aggregation_values: list[Decimal] = []
         self._aggregation_start_time: int | None = None
         self.visualize = visualize

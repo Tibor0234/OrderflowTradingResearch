@@ -2,25 +2,66 @@ from strategies.core.essentials import *
 
 class TestStrategy(BaseStrategy):
     def on_candle_close(self, candle_sec):
-        vd_1m = self.fw.get_resource("vd_1m", VolumeDelta)
-        
-        if len(vd_1m.history) == 0 or vd_1m.history[-1] is None:
+        if self.fw.is_trade_open() or self.fw.is_order_pending():
             return
 
-        if not self.fw.is_trade_open() and not self.fw.is_order_pending():
+        tf_1m = self.fw.get_resource("tf_1m", Timeframe)
+        cvd_1m = self.fw.get_resource("cvd_1m", VolumeDelta)
+        vp_1m = self.fw.get_resource("vp_1m", VolumeProfile)
+        
+        value_area = vp_1m.value_area
 
-            if vd_1m.history[-1].value > Decimal(0):
-                self.fw.place_market_order(
-                    side=1,
-                    value=1000,
-                    leverage=10,
-                    metadata={"entry_reason": "vd_1m positive"}
-                )
+        va_10pct = (value_area.high - value_area.low) * Decimal(0.05)
+        va_low_max = value_area.low + va_10pct
+        va_high_min = value_area.high - va_10pct
+        trend_strength = queries.get_trend_strength(tf_1m.content, "close", 0)
+        price = self.fw.get_current_price()
 
-        else:
-            if vd_1m.history[-1].value < Decimal(0):
-                self.fw.place_reduce_only_order(
-                    source=self.fw.get_next_trade(),
-                    pct=100,
-                    metadata={"exit_reason": "vd_1m negative"}
-                )
+        if abs(trend_strength) > 0.2:
+            return
+
+        if value_area.low <= price <= va_low_max:
+            order = self.fw.place_market_order(
+                side=Side.BUY,
+                value=1000,
+                leverage=10,
+                metadata={"entry_reason": "price within value area low range",
+                          "trend_strength": trend_strength
+                        }
+            )
+
+            self.fw.place_take_profit_market(
+                source=order,
+                price=va_high_min,
+                pct=100,
+                metadata={"take_profit_reason": "price reached value area high minimum"}
+            )
+
+            self.fw.place_stop_loss(
+                source=order,
+                price=value_area.low - va_10pct * 4,
+                metadata={"stop_loss_reason": "price reached below value area low"}
+            )
+            
+        elif va_high_min <= price <= value_area.high:
+            order = self.fw.place_market_order(
+                side=Side.SELL,
+                value=1000,
+                leverage=10,
+                metadata={"entry_reason": "price within value area high range",
+                          "trend_strength": trend_strength
+                        }
+            )
+
+            self.fw.place_take_profit_market(
+                source=order,
+                price=va_low_max,
+                pct=100,
+                metadata={"take_profit_reason": "price reached value area low maximum"}
+            )
+
+            self.fw.place_stop_loss(
+                source=order,
+                price=value_area.high + va_10pct * 4,
+                metadata={"stop_loss_reason": "price reached above value area high"}
+            )

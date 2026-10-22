@@ -130,7 +130,7 @@ class TradeExecutionManager:
     def close_expired_trades(self):
         """Close all remaining trades at the end of a session pair."""
         for trade in list(self.trades):
-            stop_order = ReduceOnly(pct=100)
+            stop_order = ReduceOnly(pct=100, metadata={"system_exit_reason": "session_end"})
             self.stop_orders.append(stop_order)
             trade.link(stop_order)
             self.on_stop_order_triggered(stop_order)

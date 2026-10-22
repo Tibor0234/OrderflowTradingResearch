@@ -10,6 +10,10 @@ class PriceBin:
     buy_volume: Decimal
     sell_volume: Decimal
 
+    @property
+    def volume(self) -> Decimal:
+        return self.buy_volume + self.sell_volume
+
 @dataclass(slots=True)
 class Volume:
     """Stores aggregated buy and sell volume within a price range."""
@@ -18,6 +22,10 @@ class Volume:
     low: Decimal | None
     buy_volume: Decimal
     sell_volume: Decimal
+
+    @property
+    def volume(self) -> Decimal:
+        return self.buy_volume + self.sell_volume
 
 @dataclass(slots=True)
 class POC:

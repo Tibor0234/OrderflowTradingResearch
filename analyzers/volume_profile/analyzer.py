@@ -1,3 +1,4 @@
+from collections import deque
 from decimal import Decimal
 
 from session_pairs.price_chart_resource import PriceChartResource
@@ -20,9 +21,11 @@ class VolumeProfileAnalyzer(PriceChartResource, TimeframeSubscriber):
         self.model: VolumeProfile = VolumeProfile(
             price_bin_count=price_bin_count,
             value_area_pct=value_area_pct,
-            length=length
+            length=length,
         )
 
+        self.value_area_rate = Decimal(value_area_pct / 100)
+        self.source: deque[Volume] = deque(maxlen=length)
         self.poc_index: int | None = None
 
     @property
@@ -38,7 +41,7 @@ class VolumeProfileAnalyzer(PriceChartResource, TimeframeSubscriber):
         m = self.model
 
         m.content.clear()
-        m.source.clear()
+        self.source.clear()
         m.current = None
 
         m.poc = None
@@ -71,15 +74,15 @@ class VolumeProfileAnalyzer(PriceChartResource, TimeframeSubscriber):
         else:
             vol.sell_volume += msg.quantity
 
-    def on_candle_close(self, next_time: int | None = None):
+    def on_candle_close(self, next_open: int | None = None):
         """Update the rolling profile and recalculate its derived metrics."""
         m = self.model
 
         deprecated = None
-        if len(m.source) == m.source.maxlen:
-            deprecated = m.source.popleft()  # ✅ FIX: helyes eltávolítás
+        if len(self.source) == self.source.maxlen:
+            deprecated = self.source.popleft()  # ✅ FIX: helyes eltávolítás
 
-        m.source.append(m.current)
+        self.source.append(m.current)
 
         if not m.content:
             self.build_profile()
@@ -110,7 +113,7 @@ class VolumeProfileAnalyzer(PriceChartResource, TimeframeSubscriber):
 
         m.current = None
 
-    def _apply_volume(self, vol, bins, min_price, bin_size, sign):
+    def _apply_volume(self, vol: Volume, bins: list[PriceBin], min_price, bin_size, sign):
         """Distribute volume across price bins based on price overlap."""
         if vol.low is None or vol.high is None or vol.high == vol.low:
             return
@@ -141,8 +144,8 @@ class VolumeProfileAnalyzer(PriceChartResource, TimeframeSubscriber):
         """Rebuild the volume profile from the complete rolling source."""
         m = self.model
 
-        lows = [v.low for v in m.source if v.low is not None]
-        highs = [v.high for v in m.source if v.high is not None]
+        lows = [v.low for v in self.source if v.low is not None]
+        highs = [v.high for v in self.source if v.high is not None]
 
         if not lows or not highs:
             return
@@ -165,7 +168,7 @@ class VolumeProfileAnalyzer(PriceChartResource, TimeframeSubscriber):
             for i in range(m.price_bin_count)
         ]
 
-        for vol in m.source:
+        for vol in self.source:
             self._apply_volume(vol, bins, min_price, bin_size, sign=1)
 
         # ✅ FIX: inplace update
@@ -187,7 +190,7 @@ class VolumeProfileAnalyzer(PriceChartResource, TimeframeSubscriber):
         if deprecated_volume:
             self._apply_volume(deprecated_volume, m.content, min_price, bin_size, sign=-1)
 
-    def calculate_poc(self, bins):
+    def calculate_poc(self, bins: list[PriceBin]):
         """Calculate the point of control from the current price bins."""
         m = self.model
 
@@ -200,9 +203,8 @@ class VolumeProfileAnalyzer(PriceChartResource, TimeframeSubscriber):
         poc_index = None
 
         for i, b in enumerate(bins):
-            total = b.buy_volume + b.sell_volume
-            if total > max_volume or poc_index is None:
-                max_volume = total
+            if b.volume > max_volume or poc_index is None:
+                max_volume = b.volume
                 poc_index = i
 
         if poc_index is None:
@@ -217,7 +219,7 @@ class VolumeProfileAnalyzer(PriceChartResource, TimeframeSubscriber):
             volume=max_volume
         )
 
-    def calculate_value_area(self, bins):
+    def calculate_value_area(self, bins: list[PriceBin]):
         """Calculate the value area around the point of control."""
         m = self.model
 
@@ -225,17 +227,15 @@ class VolumeProfileAnalyzer(PriceChartResource, TimeframeSubscriber):
             m.value_area = None
             return
 
-        total_volume = sum(b.buy_volume + b.sell_volume for b in bins)
+        total_volume = sum(b.volume for b in bins)
 
         if total_volume == 0:
             m.value_area = None
             return
 
-        target = total_volume * m.value_area_rate
+        target = total_volume * self.value_area_rate
 
         poc_idx = self.poc_index
-
-        cum = bins[poc_idx].buy_volume + bins[poc_idx].sell_volume
 
         left = poc_idx - 1
         right = poc_idx + 1
@@ -243,9 +243,11 @@ class VolumeProfileAnalyzer(PriceChartResource, TimeframeSubscriber):
         va_low = poc_idx
         va_high = poc_idx
 
+        cum = bins[poc_idx].volume
+
         while cum < target:
-            left_vol = bins[left].buy_volume + bins[left].sell_volume if left >= 0 else Decimal(-1)
-            right_vol = bins[right].buy_volume + bins[right].sell_volume if right < len(bins) else Decimal(-1)
+            left_vol = bins[left].volume if left >= 0 else Decimal(-1)
+            right_vol = bins[right].volume if right < len(bins) else Decimal(-1)
 
             if left_vol >= right_vol and left >= 0:
                 cum += left_vol

@@ -26,7 +26,7 @@ class VolumeProfileVisualizer(PriceChartVisualizer):
         """Return the volume profile bar trace."""
         bins = self.volume_profile.content
 
-        self.bar.x = [(b.buy_volume + b.sell_volume) for b in bins]
+        self.bar.x = [(b.volume) for b in bins]
         self.bar.y = [b.low + b.size / 2 for b in bins]
 
         return self.bar

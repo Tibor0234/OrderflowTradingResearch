@@ -7,7 +7,6 @@ from trading.execution.position_manager import PositionManager
 from trading.market_entities.order import Order, MarketOrder, LimitOrder
 from trading.market_entities.stop_order import StopOrder, TakeProfit, StopLoss, ReduceOnly
 from trading.market_entities.increase_order import IncreaseOrder, IncreaseLimitOrder, IncreaseMarketOrder
-from strategies.core.sequence_analyzers import SequenceAnalyzers
 from trading.execution.order_book import ExecutionOrderBook
 from trading.market_entities.utils import OrderType, Side
 from global_services.data.provider import DataProvider
@@ -21,11 +20,10 @@ from analyzers.volume_delta.model import VolumeDelta
 from analyzers.volume_profile.model import VolumeProfile
 from analyzers.big_trades.model import BigTrades
 
-
 ModelT = TypeVar("ModelT")
 
 
-class StrategyFramework(SequenceAnalyzers):
+class StrategyFramework:
     """Provides strategies with access to trading operations, market data, and analysis resources."""
 
     def __init__(self, position_manager: PositionManager, session_pair_context: SessionPairContext, execution_order_book: ExecutionOrderBook):

@@ -21,9 +21,9 @@ class CVDAnalyzer(BaseVolumeDeltaAnalyzer):
             return CVDVisualizer(self.model, top_pct, self.chart_slot)
         return None
 
-    def new_current_record(self, next_time=None):
+    def new_current_record(self, next_open=None):
         """Create the next CVD record while carrying forward the current value."""
         return OscillatorRecord(
-            time=next_time if next_time is not None else self.model.current.time,
+            time=next_open if next_open is not None else self.model.current.time,
             value=self.model.current.value
         )

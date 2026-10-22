@@ -10,7 +10,7 @@ class PanelContentRenderer:
     def render_session_pair_panel(self, session_counter: SessionCounter):
         """Render the current session and session-pair progress."""
         return (
-            f"Session: {session_counter.session_number} / {session_counter.total_sessions} | "
+            f"Session: {session_counter.session} | "
             f"{session_counter.symbol}  "
             f"Progress: {session_counter.session_pair} / "
             f"{session_counter.selected_session_pairs}"

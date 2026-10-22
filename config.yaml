@@ -32,7 +32,7 @@ reports:
 
 ml_export:
   enabled: false
-  directory: D:/OrderflowML/data/trades
+  directory: D:/OrderflowMachineLearning/data/trades
   schema_version: 1
 
 # news settings

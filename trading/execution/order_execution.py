@@ -122,8 +122,7 @@ class OrderExecutionManager:
         if not trade.is_shadow:
             self.position_manager.realized_balance -= filled_value + fee
 
-        if not trade.is_shadow:
-            self.position_manager.trade_execution._set_liquidation_order(trade)
+        self.position_manager.trade_execution._set_liquidation_order(trade)
 
         order.value -= filled_value
         if order.is_filled():

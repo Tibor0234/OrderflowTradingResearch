@@ -20,18 +20,18 @@ class Trade:
             value=value,
             leverage=order.leverage,
             metadata=order.metadata,
+            is_shadow=order.is_shadow,
         )
-        trade.is_shadow = order.is_shadow
         return trade
 
-    def __init__(self, id: uuid.UUID, execution_price, side: Side, value, leverage, metadata: dict[str, object] | None = None):
+    def __init__(self, id: uuid.UUID, execution_price, side: Side, value, leverage, metadata: dict[str, object] | None = None, is_shadow: bool = False):
         """Initialize the trade with its execution and position parameters."""
         self.id = id
         self.execution_price = execution_price
         self.side = side
         self.value = value
         self.metadata = dict(metadata) if metadata else {}
-        self.is_shadow = False
+        self.is_shadow = is_shadow
         self.invested_value = value
         self.closed_value = Decimal(0)
         self.avg_close_price = Decimal(0)
