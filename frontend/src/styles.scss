@@ -1,0 +1,49 @@
+@use './app/app';
+
+:root {
+  color-scheme: dark;
+  --surface-0: #0b1015;
+  --surface-1: #10171e;
+  --surface-2: #151e27;
+  --surface-3: #202a34;
+  --surface-4: #34414d;
+  --border: #26323d;
+  --border-subtle: #1d2832;
+  --text-primary: #e4eaf0;
+  --text-secondary: #9aa8b6;
+  --text-muted: #687786;
+  --green: #19c995;
+  --red: #f25c6c;
+  --font-xs: 11px;
+  --font-sm: 14px;
+  --font-base: 15px;
+  --font-toolbar: 14px;
+  --font-panel-title: 16px;
+  --font-metric: 19px;
+
+  font-family: Inter, "Segoe UI", Arial, sans-serif;
+  font-size: var(--font-base);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: var(--surface-0);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  min-width: 580px;
+  min-height: 440px;
+  margin: 0;
+  overflow: hidden;
+}
+
+button {
+  font-family: inherit;
+}

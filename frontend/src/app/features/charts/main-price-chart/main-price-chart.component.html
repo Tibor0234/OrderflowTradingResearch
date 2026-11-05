@@ -1,0 +1,158 @@
+<div class="chart-stage">
+  <div class="chart-info">
+    <div class="chart-indicators" aria-label="Chart legends">
+      <button
+        class="chart-indicator-toggle"
+        type="button"
+        [attr.aria-expanded]="indicatorLegendExpanded()"
+        [attr.aria-label]="(indicatorLegendExpanded() ? 'Collapse' : 'Expand') + ' chart legend'"
+        (click)="toggleIndicatorLegend()"
+      >
+        <span aria-hidden="true">{{ indicatorLegendExpanded() ? '⌃' : '⌄' }}</span>
+      </button>
+      @if (indicatorLegendExpanded()) {
+        <div class="chart-indicator-list">
+          <div class="chart-tooltip" aria-live="polite">
+            @if (hoveredCandle; as candle) {
+              <span class="tooltip-time">
+                O {{ formatPrice(candle.open) }} H {{ formatPrice(candle.high) }}
+                L {{ formatPrice(candle.low) }} C {{ formatPrice(candle.close) }}
+              </span>
+            } @else {
+              <span class="tooltip-time">OHLC</span>
+            }
+          </div>
+          @if (volumeProfile; as profile) {
+            <div class="chart-indicator">Volume Profile ({{ profile.price_bin_count }} Bars, {{ profile.value_area_pct }}% Value Area)</div>
+          }
+          @if (bigTradesTopPct !== null) {
+            <div class="chart-indicator">Big Trades ({{ bigTradesTopPct }}%)</div>
+          }
+        </div>
+      }
+    </div>
+  </div>
+  <svg
+    class="price-chart-svg"
+    viewBox="0 0 1000 470"
+    preserveAspectRatio="none"
+    role="img"
+    [attr.aria-label]="'BTCUSDT ' + timeframeLabel + ' candlestick chart'"
+    [attr.data-timeframe]="timeframe"
+    (pointermove)="onPointerMove($event)"
+    (pointerleave)="clearPointer()"
+  >
+    <g class="price-grid">
+      @for (tick of priceTicks; track tick.label) {
+        <line [attr.x1]="plotLeft" [attr.x2]="plotRight" [attr.y1]="tick.y" [attr.y2]="tick.y" />
+        <text x="998" [attr.y]="tick.y + 4" text-anchor="end">{{ tick.label }}</text>
+      }
+    </g>
+    @if (!candles.length) {
+      <text class="chart-empty-state" x="500" y="200" text-anchor="middle">Waiting for market data…</text>
+    }
+    <line class="last-price-line" [attr.x1]="plotLeft" [attr.x2]="plotRight" [attr.y1]="currentPriceY" [attr.y2]="currentPriceY" />
+    @if (volumeProfile?.value_area; as valueArea) {
+      <rect
+        class="value-area-band"
+        [attr.x]="plotLeft"
+        [attr.y]="priceToY(valueArea.high)"
+        [attr.width]="plotRight - plotLeft"
+        [attr.height]="priceToY(valueArea.low) - priceToY(valueArea.high)"
+      >
+        <title>Value area {{ formatPrice(valueArea.low) }}–{{ formatPrice(valueArea.high) }}</title>
+      </rect>
+    }
+    <g class="candles">
+      @for (item of candles; track item.candle.timestamp; let index = $index) {
+        <g [class.up]="item.color === 'up'" [class.down]="item.color === 'down'" [class.hovered]="isHovered(index)" [attr.data-candle-index]="index">
+          <line class="candle-wick" [attr.x1]="item.x" [attr.x2]="item.x" [attr.y1]="item.highY" [attr.y2]="item.lowY" />
+          <rect class="candle-body" [attr.x]="item.x - item.bodyWidth / 2" [attr.y]="item.bodyY" [attr.width]="item.bodyWidth" [attr.height]="item.bodyHeight" />
+          <title>{{ formatTime(item.candle.timestamp, true) }} UTC | O {{ formatPrice(item.candle.open) }} H {{ formatPrice(item.candle.high) }} L {{ formatPrice(item.candle.low) }} C {{ formatPrice(item.candle.close) }}</title>
+        </g>
+      }
+    </g>
+    @if (volumeProfile) {
+      <g class="volume-profile">
+        @for (bin of profileBins; track bin.low) {
+          <rect [attr.x]="bin.x" [attr.y]="bin.lowY" [attr.width]="bin.width" [attr.height]="bin.height">
+            <title>{{ formatPrice(bin.low) }}–{{ formatPrice(bin.low + bin.size) }} · Volume {{ bin.volume }}</title>
+          </rect>
+        }
+      </g>
+      @if (volumeProfile.poc; as poc) {
+        <g class="point-of-control">
+          <line [attr.x1]="plotLeft" [attr.x2]="plotRight" [attr.y1]="priceToY(poc.price)" [attr.y2]="priceToY(poc.price)" />
+          <text [attr.x]="plotLeft + 5" [attr.y]="priceToY(poc.price) - 4" text-anchor="start">
+            POC {{ formatPrice(poc.price) }}
+            <title>POC {{ formatPrice(poc.price) }} · Volume {{ poc.volume }}</title>
+          </text>
+        </g>
+      }
+    }
+    @if (bigTradeMarkers.length) {
+      <g class="big-trades">
+        @for (marker of bigTradeMarkers; track $index) {
+          <circle
+            [class.buy]="marker.trade.side === 1"
+            [class.sell]="marker.trade.side === -1"
+            [attr.data-side]="marker.trade.side === 1 ? 'BUY' : 'SELL'"
+            [attr.cx]="marker.x"
+            [attr.cy]="marker.y"
+            [attr.r]="marker.radius"
+            [attr.fill-opacity]="marker.fillOpacity"
+          >
+            <title>{{ marker.trade.side === 1 ? 'BUY' : 'SELL' }} · {{ formatPrice(marker.trade.price) }} · {{ marker.trade.quantity }} @ {{ formatTime(marker.trade.time, true) }} UTC</title>
+          </circle>
+        }
+      </g>
+    }
+    <g class="position-entry-levels">
+      @for (level of positionEntryLines; track level.id) {
+        <line
+          [class.trade-entry-line]="level.kind === 'trade'"
+          [class.order-entry-line]="level.kind === 'order'"
+          [class.hovered]="level.id === hoveredPositionId"
+          [class.long]="level.side === 'long'"
+          [class.short]="level.side === 'short'"
+          [attr.data-position-id]="level.id"
+          [attr.x1]="plotLeft"
+          [attr.x2]="plotRight"
+          [attr.y1]="level.y"
+          [attr.y2]="level.y"
+        >
+          <title>{{ level.kind === 'trade' ? 'Trade entry' : 'Order entry' }} · {{ level.side }} · {{ formatPrice(level.price) }}</title>
+        </line>
+        <text
+          class="position-entry-price"
+          [class.hovered]="level.id === hoveredPositionId"
+          [class.long]="level.side === 'long'"
+          [class.short]="level.side === 'short'"
+          [attr.data-position-price-id]="level.id"
+          [attr.x]="plotLeft + 5"
+          [attr.y]="level.y - 4"
+          text-anchor="start"
+        >{{ level.kind === 'trade' ? 'Trade' : 'Order' }} {{ formatPrice(level.price) }}</text>
+      }
+    </g>
+    @if (candles.length) {
+      <text
+        class="current-price-label"
+        [attr.x]="plotLeft + 5"
+        [attr.y]="currentPriceY - 4"
+        text-anchor="start"
+      >Price {{ formatPrice(candles[candles.length - 1].candle.close) }}</text>
+    }
+    @if (hoveredIndex() !== null) {
+      <g class="crosshair" aria-hidden="true">
+        <line [attr.x1]="candles[hoveredIndex()!].x" [attr.x2]="candles[hoveredIndex()!].x" [attr.y1]="plotTop" [attr.y2]="plotBottom" />
+        <line [attr.x1]="plotLeft" [attr.x2]="plotRight" [attr.y1]="crosshairY()" [attr.y2]="crosshairY()" />
+      </g>
+    }
+    <g class="time-axis">
+      @for (tick of timeTicks; track $index) {
+        <text [attr.x]="tick.x" y="451" text-anchor="middle">{{ tick.label }}</text>
+      }
+    </g>
+  </svg>
+</div>

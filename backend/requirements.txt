@@ -1,0 +1,13 @@
+python-dotenv
+PyYAML
+psycopg[binary]
+websockets>=14.0
+aiohttp
+numpy
+plotly
+reportlab
+pypdf
+openpyxl
+pyarrow
+pytest
+ollama

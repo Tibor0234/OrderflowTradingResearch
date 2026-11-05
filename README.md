@@ -25,7 +25,7 @@ Market data is replayed from a PostgreSQL database in chronological order. Given
 
 - **Execution Simulation** – `PositionManager` handles positions, orders, stop orders, maker/taker fees and the initial account balance.
 
-- **Performance Analysis** – generates equity curves and statistics such as win rate, ROI, maximum drawdown, PnL, expectancy, average profit/loss and average holding time. Results are available both per session pair and cumulatively.
+- **Performance Analysis** – generates equity curves and statistics such as win rate, ROI, maximum drawdown, PnL, profit factor, fees paid, expectancy, average profit/loss and average holding time. Results are available both per session pair and cumulatively.
 
 - **Live Dashboard** – a Dash/Plotly interface displaying price charts, context charts, trades, equity curves, statistics and news.
 
@@ -111,6 +111,16 @@ Start the application from the project root:
 ```bash
 python main.py
 ```
+
+The market feed starts stopped. Send a `start` or `stop` action to control processing:
+
+```bash
+curl -X POST http://127.0.0.1:8765/api/replay \
+  -H "Content-Type: application/json" \
+  -d '{"action":"start"}'
+```
+
+Use `{"action":"stop"}` to pause processing.
 
 ## Planned Improvements
 

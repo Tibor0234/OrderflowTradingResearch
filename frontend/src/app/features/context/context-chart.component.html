@@ -1,0 +1,82 @@
+<section class="panel context-panel" [attr.data-target]="chart.target">
+  <div class="panel-heading">
+    <h2>{{ formatPeriod(chart.period) }}</h2>
+    <div class="heading-tools">
+      <span class="heading-note">{{ chart.interval }}</span>
+      <button class="panel-toggle" type="button" [attr.aria-label]="(expanded ? 'Collapse' : 'Expand') + ' ' + formatPeriod(chart.period) + ' context chart panel'" [attr.aria-expanded]="expanded" (click)="expandedChange.emit()">
+        <span aria-hidden="true">{{ expanded ? '⌄' : '›' }}</span>
+      </button>
+    </div>
+  </div>
+  @if (expanded) {
+    <div class="context-chart" [attr.aria-label]="formatPeriod(chart.period) + ' OHLCV context chart'">
+      <svg viewBox="0 0 280 120" preserveAspectRatio="none" role="img" [attr.aria-label]="formatPeriod(chart.period) + ' candlestick chart'">
+        <g class="context-price-axis">
+          @for (tick of priceTicks; track tick.label) {
+            <line [attr.x1]="plotLeft" [attr.x2]="plotRight" [attr.y1]="tick.y" [attr.y2]="tick.y" />
+            <text [attr.x]="plotRight + 4" [attr.y]="tick.y + 3" text-anchor="start">{{ tick.label }}</text>
+          }
+        </g>
+        @if (chart.volumeProfile?.value_area; as valueArea) {
+          <rect class="context-value-area" [attr.x]="plotLeft" [attr.y]="priceToY(valueArea.high)" [attr.width]="plotRight - plotLeft" [attr.height]="priceToY(valueArea.low) - priceToY(valueArea.high)">
+            <title>Value area {{ formatPrice(valueArea.low) }}–{{ formatPrice(valueArea.high) }}</title>
+          </rect>
+        }
+        <g class="context-candles">
+          @for (item of candles; track item.candle.time) {
+            <g [class.up]="item.color === 'up'" [class.down]="item.color === 'down'">
+              <line [attr.x1]="item.x" [attr.x2]="item.x" [attr.y1]="item.highY" [attr.y2]="item.lowY" />
+              <rect [attr.x]="item.x - item.bodyWidth / 2" [attr.y]="item.bodyY" [attr.width]="item.bodyWidth" [attr.height]="item.bodyHeight">
+                <title>{{ chart.interval }} OHLC · O {{ formatPrice(item.candle.open) }} H {{ formatPrice(item.candle.high) }} L {{ formatPrice(item.candle.low) }} C {{ formatPrice(item.candle.close) }}</title>
+              </rect>
+            </g>
+          }
+        </g>
+        @if (chart.volumeProfile; as profile) {
+          <g class="context-profile">
+            @for (bin of profileBins; track bin.low) {
+              <rect [attr.x]="bin.x" [attr.y]="bin.y" [attr.width]="bin.width" [attr.height]="bin.height">
+                <title>{{ formatPrice(bin.low) }}–{{ formatPrice(bin.low + bin.size) }} · Volume {{ bin.volume }}</title>
+              </rect>
+            }
+          </g>
+          @if (profile.poc; as poc) {
+            <line class="context-poc" [attr.x1]="plotLeft" [attr.x2]="plotRight" [attr.y1]="priceToY(poc.price)" [attr.y2]="priceToY(poc.price)">
+              <title>POC {{ formatPocPrice(poc.price) }} · Volume {{ poc.volume }}</title>
+            </line>
+            <text class="context-poc-label" [attr.x]="plotLeft + 3" [attr.y]="priceToY(poc.price) - 3" text-anchor="start">
+              POC {{ formatPocPrice(poc.price) }}
+            </text>
+          }
+        }
+        @if (currentPrice !== null) {
+          <line
+            class="context-current-price"
+            [attr.x1]="plotLeft"
+            [attr.x2]="plotRight"
+            [attr.y1]="priceToY(currentPrice)"
+            [attr.y2]="priceToY(currentPrice)"
+          />
+          <text
+            class="context-current-price-label"
+            [attr.x]="plotLeft + 3"
+            [attr.y]="priceToY(currentPrice) - 3"
+            text-anchor="start"
+          >Price {{ formatPrice(currentPrice) }}</text>
+        }
+        @if (timeTicks.length) {
+          <g class="context-time-axis">
+            <line [attr.x1]="plotLeft" [attr.x2]="plotRight" y1="102" y2="102" />
+            @for (tick of timeTicks; track $index) {
+              <line [attr.x1]="tick.x" [attr.x2]="tick.x" y1="102" y2="105" />
+              <text [attr.x]="tick.x" y="116" [attr.text-anchor]="tick.anchor">{{ tick.label }}</text>
+            }
+          </g>
+        }
+        @if (!candles.length && !profileBins.length) {
+          <text class="context-empty" x="166" y="52" text-anchor="middle">Waiting for market data…</text>
+        }
+      </svg>
+    </div>
+  }
+</section>

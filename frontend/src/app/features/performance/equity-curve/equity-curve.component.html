@@ -1,0 +1,35 @@
+<div class="equity-chart" aria-label="Equity history chart">
+  <svg viewBox="0 0 500 184" preserveAspectRatio="none" role="img" aria-label="Equity over time">
+    <g class="equity-grid">
+      @for (tick of valueTicks; track tick.label) {
+        <line [attr.x1]="plotLeft" [attr.x2]="plotRight" [attr.y1]="tick.y" [attr.y2]="tick.y" />
+        <text x="461" [attr.y]="tick.y + 4" text-anchor="start">{{ tick.label }}</text>
+      }
+    </g>
+    <path class="equity-area" [attr.d]="areaPath" />
+    <path class="equity-line" [attr.d]="linePath" />
+    @if (startingEquityY !== null) {
+      <line class="starting-equity-line" [attr.x1]="plotLeft" [attr.x2]="plotRight" [attr.y1]="startingEquityY" [attr.y2]="startingEquityY" />
+    }
+    @if (currentEquityY !== null && currentEquityValue !== null) {
+      <line class="current-equity-line" [attr.x1]="plotLeft" [attr.x2]="plotRight" [attr.y1]="currentEquityY" [attr.y2]="currentEquityY" />
+    }
+    <g class="equity-time-axis">
+      @for (tick of timeTicks; track $index) {
+        <text [attr.x]="tick.x" y="178" text-anchor="middle">{{ tick.label }}</text>
+      }
+    </g>
+  </svg>
+  @if (currentEquityY !== null && currentEquityValue !== null) {
+    <span
+      class="current-equity-label"
+      [style.top.%]="equityLabelTopPercent(currentEquityY)"
+    >Equity ${{ formatCurrentEquity(currentEquityValue) }}</span>
+  }
+  @if (startingEquityY !== null && startingEquityValue !== null) {
+    <span
+      class="starting-equity-label"
+      [style.top.%]="equityLabelTopPercent(startingEquityY)"
+    >Starting Balance ${{ formatCurrentEquity(startingEquityValue) }}</span>
+  }
+</div>

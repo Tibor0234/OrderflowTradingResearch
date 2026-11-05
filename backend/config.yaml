@@ -1,0 +1,23 @@
+# ==================== USER CONFIG ====================
+# Market symbols and session ranges to process.
+symbols:
+
+
+session_ids:
+
+
+# Initial account balance in USD and exchange fees in percent.
+starting_balance: 100000
+
+maker_fee_rate: 0.02
+taker_fee_rate: 0.06
+
+ml_export:
+  enabled: false
+  directory: D:/OrderflowMachineLearning/data/trades
+  schema_version: 1
+
+# news settings
+news:
+  db_path: news_analysis.db
+  ai_model: qwen3:4b

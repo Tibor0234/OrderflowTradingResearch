@@ -1,0 +1,69 @@
+<section class="oscillator-panel" [class.is-collapsed]="!expanded">
+  <div class="oscillator-heading">
+    <h2>{{ title }}</h2>
+    <div class="oscillator-meta">
+      @if (expanded) {
+        <span>{{ currentValue }}</span>
+      }
+      <button type="button" [attr.aria-label]="(expanded ? 'Collapse ' : 'Expand ') + title" [attr.aria-expanded]="expanded" (click)="toggleExpanded()">
+        <span aria-hidden="true">{{ expanded ? '⌄' : '›' }}</span>
+      </button>
+    </div>
+  </div>
+  @if (expanded) {
+    <div class="oscillator-chart" [attr.aria-label]="title + ' chart'">
+      @if (kind === 'volumeDelta') {
+        <svg viewBox="0 0 1000 190" preserveAspectRatio="none" role="img" [attr.aria-label]="title + ' positive and negative volume delta bars'">
+          <g class="oscillator-grid">
+            @for (tick of deltaTicks; track tick.label) {
+              <line [attr.x1]="plotLeft" [attr.x2]="plotRight" [attr.y1]="tick.y" [attr.y2]="tick.y" />
+              <text x="998" [attr.y]="tick.y + 4" text-anchor="end">{{ tick.label }}</text>
+            }
+          </g>
+          <g class="delta-bars">
+            @for (bar of deltaBars; track bar.timestamp) {
+              <rect [class.up]="bar.direction === 'up'" [class.down]="bar.direction === 'down'" [attr.data-value]="bar.value" [attr.x]="bar.x - bar.width / 2" [attr.y]="bar.y" [attr.width]="bar.width" [attr.height]="bar.height">
+                <title>{{ formatTime(bar.timestamp) }} · Delta {{ bar.value.toFixed(2) }}</title>
+              </rect>
+            }
+          </g>
+          <g class="oscillator-time-axis">
+            @for (tick of timeTicks; track $index) {
+              <text [attr.x]="tick.x" y="182" text-anchor="middle">{{ tick.label }}</text>
+            }
+          </g>
+        </svg>
+      } @else {
+        <svg viewBox="0 0 1000 190" preserveAspectRatio="none" role="img" [attr.aria-label]="title + (kind === 'cvd' ? ' cumulative volume delta line' : ' time series line')">
+          <g class="oscillator-grid">
+            @for (tick of cvdTicks; track tick.label) {
+              <line [attr.x1]="plotLeft" [attr.x2]="plotRight" [attr.y1]="tick.y" [attr.y2]="tick.y" />
+              <text x="998" [attr.y]="tick.y + 4" text-anchor="end">{{ tick.label }}</text>
+            }
+          </g>
+          @if (kind === 'cvd') {
+            <line class="cvd-zero-line" [attr.x1]="plotLeft" [attr.x2]="plotRight" [attr.y1]="cvdZeroY" [attr.y2]="cvdZeroY" />
+            @for (segment of cvdSegments; track $index) {
+              <line
+                class="cvd-line"
+                [class.positive]="segment.direction === 'positive'"
+                [class.negative]="segment.direction === 'negative'"
+                [attr.x1]="segment.x1"
+                [attr.y1]="segment.y1"
+                [attr.x2]="segment.x2"
+                [attr.y2]="segment.y2"
+              />
+            }
+          } @else {
+            <path class="open-interest-line" [attr.d]="cvdPath" />
+          }
+          <g class="oscillator-time-axis">
+            @for (tick of timeTicks; track $index) {
+              <text [attr.x]="tick.x" y="182" text-anchor="middle">{{ tick.label }}</text>
+            }
+          </g>
+        </svg>
+      }
+    </div>
+  }
+</section>

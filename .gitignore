@@ -1,73 +1,91 @@
-# =========================
-# ENV / SECRETS
-# =========================
-.env
-*.env
+#--- BACKEND ---#
 
-# =========================
-# DATABASE
-# =========================
-*.db
-*.sqlite
-*.sqlite3
+# Environment and secrets
+/backend/**/.env
+/backend/**/*.env
 
-# =========================
-# LOGS
-# =========================
-logs/
-*.log
+# Databases
+/backend/**/*.db
+/backend/**/*.sqlite
+/backend/**/*.sqlite3
 
-# =========================
-# PYTHON CACHE
-# =========================
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
+# Logs
+/backend/**/logs/
+/backend/**/*.log
 
-# =========================
-# TEST / CACHE
-# =========================
-.pytest_cache/
-.mypy_cache/
-.coverage
-htmlcov/
+# Python cache
+/backend/**/__pycache__/
+/backend/**/*.pyc
+/backend/**/*.pyo
+/backend/**/*.pyd
 
-# =========================
-# VIRTUAL ENV
-# =========================
-venv/
-.venv/
+# Tests and cache
+/backend/**/.pytest_cache/
+/backend/**/.mypy_cache/
+/backend/**/.coverage
+/backend/**/htmlcov/
 
-# =========================
+# Virtual environments
+/backend/**/venv/
+/backend/**/.venv/
+
 # IDE
-# =========================
-.vscode/
-.idea/
+/backend/**/.vscode/
+/backend/**/.idea/
 
-# =========================
 # OS
-# =========================
-.DS_Store
-Thumbs.db
+/backend/**/.DS_Store
+/backend/**/Thumbs.db
 
-# =========================
-# OPTIONAL: DATA EXPORTS
-# =========================
-*.parquet
-*.csv
+# Data exports
+/backend/**/*.parquet
+/backend/**/*.csv
 
-# =========================
-# REPORTS
-# =========================
-reports/
+# Reports and unused files
+/backend/**/reports/
+/backend/**/unused/
 
-# =========================
-# DB
-# =========================
-news_analysis.db
+#--- FRONTEND ---#
 
-# =========================
-# UNUSED FILES
-# =========================
-unused/
+# Compiled output
+/frontend/dist/
+/frontend/tmp/
+/frontend/out-tsc/
+/frontend/bazel-out/
+
+# Node
+/frontend/**/node_modules/
+/frontend/**/npm-debug.log
+/frontend/**/yarn-error.log
+
+# IDEs and editors
+/frontend/**/.idea/
+/frontend/**/.project
+/frontend/**/.classpath
+/frontend/**/.c9/
+/frontend/**/*.launch
+/frontend/**/.settings/
+/frontend/**/*.sublime-workspace
+
+# Visual Studio Code
+/frontend/.vscode/*
+!/frontend/.vscode/settings.json
+!/frontend/.vscode/tasks.json
+!/frontend/.vscode/launch.json
+!/frontend/.vscode/extensions.json
+!/frontend/.vscode/mcp.json
+/frontend/**/.history/*
+
+# Miscellaneous
+/frontend/.angular/cache/
+/frontend/**/.sass-cache/
+/frontend/**/connect.lock
+/frontend/**/coverage/
+/frontend/**/libpeerconnection.log
+/frontend/**/testem.log
+/frontend/typings/
+/frontend/**/__screenshots__/
+
+# System files
+/frontend/**/.DS_Store
+/frontend/**/Thumbs.db

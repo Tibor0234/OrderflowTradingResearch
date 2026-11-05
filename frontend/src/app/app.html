@@ -1,0 +1,436 @@
+<div class="dashboard">
+  <header class="topbar">
+    <div class="topbar-controls">
+      <div class="topbar-menu">
+        <button
+          class="icon-button menu-button"
+          type="button"
+          aria-label="Open dashboard menu"
+          title="Open menu"
+          aria-haspopup="menu"
+          aria-controls="dashboard-menu"
+          [attr.aria-expanded]="menuExpanded()"
+          (click)="toggleMenu()"
+        >
+          <span class="menu-glyph" aria-hidden="true"><i></i><i></i><i></i></span>
+        </button>
+        @if (menuExpanded()) {
+          <div class="dashboard-menu" id="dashboard-menu" role="menu" aria-label="Dashboard menu">
+            <button
+              class="dashboard-menu-item"
+              type="button"
+              role="menuitem"
+              [disabled]="exportStatisticsDisabled() || reportExportPending()"
+              (click)="exportStatistics()"
+            >Export Statistics</button>
+            @if (reportExportError(); as exportError) {
+              <span class="dashboard-menu-error" role="alert">{{ exportError }}</span>
+            }
+          </div>
+        }
+      </div>
+      <div class="replay-controls">
+        <button
+          class="play-button"
+          type="button"
+          [attr.aria-label]="replayPlaying() ? 'Pause replay' : 'Play replay'"
+          [disabled]="replayRequestPending() || processEnded()"
+          [attr.aria-busy]="replayRequestPending()"
+          (click)="toggleReplay()"
+        >
+          <span aria-hidden="true">{{ processEnded() ? '■' : replayPlaying() ? '❚❚' : '▶' }}</span>
+        </button>
+        <button
+          class="replay-step-button"
+          type="button"
+          aria-label="Run until the next selected timeframe candle update"
+          title="Run until the next selected timeframe candle update"
+          [disabled]="!canRunUntilNextCandle()"
+          (click)="runUntilNextCandle()"
+        >
+          <svg aria-hidden="true" viewBox="0 0 24 24">
+            <path d="M5 5v14l11-7zM20 5v14" />
+          </svg>
+        </button>
+        <button
+          class="icon-button auto-stop-settings-button"
+          type="button"
+          aria-label="Replay auto-stop settings"
+          title="Replay auto-stop settings"
+          aria-controls="auto-stop-settings"
+          [attr.aria-expanded]="autoStopSettingsExpanded()"
+          (click)="toggleAutoStopSettings()"
+        >
+          <svg aria-hidden="true" viewBox="0 0 24 24">
+            <path d="M4 6h4m4 0h8M4 12h10m4 0h2M4 18h2m4 0h10" />
+            <circle cx="10" cy="6" r="2" />
+            <circle cx="16" cy="12" r="2" />
+            <circle cx="8" cy="18" r="2" />
+          </svg>
+        </button>
+        @if (autoStopSettingsExpanded()) {
+          <div class="auto-stop-settings" id="auto-stop-settings" role="group" aria-label="Automatic stop events">
+            <span class="auto-stop-settings-title">Auto-stop on</span>
+            <label>
+              <input
+                type="checkbox"
+                [checked]="autoStopEvents().tradeOpen"
+                (change)="setAutoStopEvent('tradeOpen', $event)"
+              />
+              <span>Trade Open</span>
+            </label>
+            <label>
+              <input
+                type="checkbox"
+                [checked]="autoStopEvents().orderPlaced"
+                (change)="setAutoStopEvent('orderPlaced', $event)"
+              />
+              <span>Order Placed</span>
+            </label>
+            <button class="auto-stop-clear" type="button" (click)="clearAutoStopEvents()">Clear</button>
+          </div>
+        }
+      </div>
+      @if (replayRequestError(); as replayError) {
+        <span class="replay-error" role="alert">{{ replayError }}</span>
+      }
+    </div>
+    <div class="session-summary">
+      <div class="summary-item strategy-summary">
+        <span class="summary-label">STRATEGY</span>
+        <strong class="brand-name">{{ strategyName() }}</strong>
+      </div>
+      <span class="topbar-divider" aria-hidden="true"></span>
+      <div class="summary-item session-count">
+        <span class="summary-label">SESSION</span>
+        <strong>{{ sessionNumber() }}</strong>
+      </div>
+      <span class="topbar-divider" aria-hidden="true"></span>
+      <div
+        class="summary-item symbol-summary"
+        [class.has-logo]="symbolLogoUrl() !== null && failedSymbolLogoUrl() !== symbolLogoUrl()"
+      >
+        <span class="summary-label">SYMBOL</span>
+        <strong class="symbol-button" [attr.aria-label]="'Selected symbol ' + sessionSymbol()">
+          <span>{{ sessionSymbol() }}</span>
+        </strong>
+        @if (symbolLogoUrl(); as logoUrl) {
+          @if (failedSymbolLogoUrl() !== logoUrl) {
+            <img
+              class="symbol-logo"
+              [src]="logoUrl"
+              alt=""
+              aria-hidden="true"
+              (error)="handleSymbolLogoError(logoUrl)"
+            />
+          }
+        }
+      </div>
+      <span class="topbar-divider" aria-hidden="true"></span>
+      <div class="summary-item session-progress">
+        <span class="summary-label">PROGRESS</span>
+        <strong>{{ sessionProgress() }}</strong>
+      </div>
+    </div>
+
+    <div class="connection-indicator">
+      <span class="live-dot" [class.connected]="connectionStatus() === 'connected'" aria-hidden="true"></span>
+      <span class="connection-status" [attr.data-status]="connectionStatus()">{{ connectionLabel() }}</span>
+    </div>
+  </header>
+
+  <div class="terminal-grid" [class.left-collapsed]="leftCollapsed()" [class.right-collapsed]="rightCollapsed()">
+    <aside class="sidebar left-sidebar" aria-label="Market context">
+      @if (leftCollapsed()) {
+        <button class="collapsed-rail" type="button" aria-label="Expand left sidebar" title="Expand left sidebar" (click)="leftCollapsed.set(false)">
+          <span aria-hidden="true">›</span>
+          <span class="rail-label">CONTEXT</span>
+        </button>
+      } @else {
+        <div class="sidebar-heading">
+          <span>MARKET CONTEXT</span>
+          <button class="icon-button collapse-button" type="button" aria-label="Collapse left sidebar" title="Collapse left sidebar" (click)="leftCollapsed.set(true)">‹</button>
+        </div>
+        <div class="sidebar-scroll left-panels">
+          @for (chart of contextCharts(); track chart.target) {
+            <app-context-chart
+              [chart]="chart"
+              [expanded]="isContextChartExpanded(chart.target)"
+              (expandedChange)="toggleContextChart(chart.target)"
+            />
+          }
+
+          @if (newsPanel(); as news) {
+            <section class="panel news-panel" [class.is-collapsed]="!panelExpanded()['news']">
+              <div class="panel-heading">
+                <h2>News</h2>
+                <div class="panel-heading-tools">
+                  <span class="heading-note">LATEST</span>
+                  <button class="panel-toggle" type="button" [attr.aria-label]="(panelExpanded()['news'] ? 'Collapse' : 'Expand') + ' News panel'" [attr.aria-expanded]="panelExpanded()['news']" (click)="togglePanel('news')">
+                    <span aria-hidden="true">{{ panelExpanded()['news'] ? '⌄' : '›' }}</span>
+                  </button>
+                </div>
+              </div>
+              @if (panelExpanded()['news']) {
+                <dl class="news-aggregates" aria-label="Aggregated news metrics">
+                  <div class="news-aggregate">
+                    <dt>Sentiment</dt>
+                    <dd
+                      class="news-sentiment"
+                      [class.positive]="news.aggregated !== null && news.aggregated.sentiment >= 0"
+                      [class.negative]="news.aggregated !== null && news.aggregated.sentiment < 0"
+                    >{{ formatNewsMetric(news.aggregated?.sentiment) }}</dd>
+                  </div>
+                  <div class="news-aggregate">
+                    <dt>Severity</dt>
+                    <dd>{{ formatNewsMetric(news.aggregated?.severity) }}</dd>
+                  </div>
+                  <div class="news-aggregate">
+                    <dt>Market Relevance</dt>
+                    <dd>{{ formatNewsMetric(news.aggregated?.market_relevance) }}</dd>
+                  </div>
+                  <div class="news-aggregate">
+                    <dt>Symbol Relevance</dt>
+                    <dd>{{ formatNewsMetric(news.aggregated?.symbol_relevance) }}</dd>
+                  </div>
+                </dl>
+                <div class="news-list">
+                  @if (news.headlines.length) {
+                    @for (item of news.headlines; track item.time) {
+                      <article class="news-item">
+                        <time [attr.datetime]="newsDateTime(item.time)">{{ formatNewsTime(item.time) }} UTC</time>
+                        <p>{{ item.headline }}</p>
+                      </article>
+                    }
+                  } @else {
+                    <p class="news-empty">Waiting for news updates…</p>
+                  }
+                </div>
+              }
+            </section>
+          }
+
+        </div>
+      }
+    </aside>
+
+    <main class="workspace" aria-label="Trading workspace">
+      <div #chartPanels class="chart-panels">
+        <section class="panel main-chart-panel" [style.flex]="mainPanelStyle().flex" [style.min-height]="mainPanelStyle().minHeight">
+          <div class="panel-heading">
+            <div class="timeframe-controls" role="group" aria-label="Chart timeframe">
+              @for (timeframe of timeframes(); track timeframe) {
+                <button type="button" [class.selected]="selectedTimeframe() === timeframe" [attr.aria-pressed]="selectedTimeframe() === timeframe" (click)="selectTimeframe(timeframe)">{{ formatTimeframe(timeframe) }}</button>
+              }
+            </div>
+          </div>
+          <app-main-price-chart
+            [timeframe]="chartTimeframe()"
+            [candlesData]="chartData().candles"
+            [volumeProfile]="volumeProfile()"
+            [bigTrades]="bigTrades()"
+            [bigTradesTopPct]="bigTradesResource()?.top_pct ?? null"
+            [positionEntities]="displayedPositionEntities()"
+            [hoveredPositionId]="hoveredPositionId()"
+          />
+        </section>
+
+        @if (hasResizePair(0)) {
+          <div
+            class="chart-resize-handle"
+            role="separator"
+            aria-orientation="horizontal"
+            [attr.aria-label]="resizeLabel(0)"
+            tabindex="0"
+            (pointerdown)="onResizePointerDown(0, $event)"
+            (pointermove)="onResizePointerMove($event)"
+            (pointerup)="endResize($event)"
+            (pointercancel)="endResize($event)"
+            (keydown)="onResizeKeydown(0, $event)"
+          ></div>
+        }
+
+        @for (oscillator of oscillators(); track oscillator.kind) {
+          <app-oscillator-panel
+            [title]="oscillator.title"
+            [kind]="oscillator.kind"
+            [timeframe]="chartTimeframe()"
+            [series]="oscillator.series"
+            [expanded]="oscillator.expanded"
+            [style.flex]="oscillatorStyle(oscillator.kind, oscillator.expanded).flex"
+            [style.min-height]="oscillatorStyle(oscillator.kind, oscillator.expanded).minHeight"
+            (expandedChange)="setOscillatorExpanded(oscillator.kind, $event)"
+          />
+          @if (hasResizePair($index + 1)) {
+            <div
+              class="chart-resize-handle"
+              role="separator"
+              aria-orientation="horizontal"
+              [attr.aria-label]="resizeLabel($index + 1)"
+              tabindex="0"
+              (pointerdown)="onResizePointerDown($index + 1, $event)"
+              (pointermove)="onResizePointerMove($event)"
+              (pointerup)="endResize($event)"
+              (pointercancel)="endResize($event)"
+              (keydown)="onResizeKeydown($index + 1, $event)"
+            ></div>
+          }
+        }
+      </div>
+    </main>
+
+    <aside class="sidebar right-sidebar" aria-label="Performance and orders">
+      @if (rightCollapsed()) {
+        <button class="collapsed-rail" type="button" aria-label="Expand right sidebar" title="Expand right sidebar" (click)="rightCollapsed.set(false)">
+          <span aria-hidden="true">‹</span>
+          <span class="rail-label">ACTIVITY</span>
+        </button>
+      } @else {
+        <div class="sidebar-heading">
+          <span>PERFORMANCE</span>
+          <button class="icon-button collapse-button" type="button" aria-label="Collapse right sidebar" title="Collapse right sidebar" (click)="rightCollapsed.set(true)">›</button>
+        </div>
+        <div class="sidebar-scroll right-panels">
+          <section class="panel performance-panel" [class.is-collapsed]="!panelExpanded()['performance']">
+            <div class="panel-heading">
+              <h2>Statistics</h2>
+              <div class="panel-heading-tools">
+                <select
+                  id="performance-view-select"
+                  class="performance-view-select"
+                  aria-label="Analysis view"
+                  [value]="analysisViewSelection()"
+                  (change)="selectAnalysisView($event)"
+                >
+                  @for (name of analysisNames(); track name) {
+                    <option [value]="name">{{ name }}</option>
+                  }
+                </select>
+                <button class="panel-toggle" type="button" [attr.aria-label]="(panelExpanded()['performance'] ? 'Collapse' : 'Expand') + ' Statistics panel'" [attr.aria-expanded]="panelExpanded()['performance']" (click)="togglePanel('performance')">
+                  <span aria-hidden="true">{{ panelExpanded()['performance'] ? '⌄' : '›' }}</span>
+                </button>
+              </div>
+            </div>
+            @if (panelExpanded()['performance']) {
+              <div class="performance-content">
+                @if (selectedAnalysisCurve(); as curve) {
+                  <app-equity-curve [points]="curve.points" [startingBalance]="curve.startingBalance" />
+                }
+                @if (selectedStatistics().length) {
+                  <dl class="stats-grid" aria-label="Analysis statistics">
+                    @for (item of selectedStatistics(); track item.key) {
+                      <div>
+                        <dt>{{ formatStatisticKey(item.key) }}</dt>
+                        <dd
+                          [class.positive]="isPositiveStatistic(item.key, item.value)"
+                          [class.negative]="isNegativeStatistic(item.key, item.value)"
+                        >{{ formatStatisticValue(item.key, item.value) }}</dd>
+                      </div>
+                    }
+                  </dl>
+                }
+              </div>
+            }
+          </section>
+
+          <section class="panel positions-panel" [class.is-collapsed]="!panelExpanded()['positions']">
+            <div class="panel-heading">
+              <h2>Positions</h2>
+              <div class="panel-heading-tools">
+                <span class="count-badge">{{ positionItemCount() }}</span>
+                <button class="panel-toggle" type="button" [attr.aria-label]="(panelExpanded()['positions'] ? 'Collapse' : 'Expand') + ' Positions panel'" [attr.aria-expanded]="panelExpanded()['positions']" (click)="togglePanel('positions')">
+                  <span aria-hidden="true">{{ panelExpanded()['positions'] ? '⌄' : '›' }}</span>
+                </button>
+              </div>
+            </div>
+            @if (panelExpanded()['positions']) {
+              <div class="position-list">
+                @for (group of positionGroups(); track group.trade.id) {
+                  <div class="position-group position-trade-group">
+                    <div class="position-entry position-trade" [class.is-hovered]="hoveredPositionId() === group.trade.id" [attr.data-position-id]="group.trade.id" (mouseenter)="hoverPosition(group.trade.id)" (mouseleave)="clearHoveredPosition(group.trade.id)">
+                      <div class="position-entry-heading">
+                        <strong>Trade · <span [class.position-long]="positionSideClass(group.trade.side) === 'position-long'" [class.position-short]="positionSideClass(group.trade.side) === 'position-short'">{{ positionSideLabel(group.trade.side) }}</span></strong>
+                        <span [class.positive]="positionPnlClass(group.trade.pnl) === 'positive'" [class.negative]="positionPnlClass(group.trade.pnl) === 'negative'">PnL {{ formatDollarValue(group.trade.pnl) }}</span>
+                      </div>
+                      <div class="position-entry-details">
+                        <span>Size {{ formatDollarValue(group.trade.value) }} × {{ formatPositionNumber(group.trade.leverage) }}</span>
+                        <span>Entry {{ formatPositionNumber(group.trade.execution_price) }}</span>
+                      </div>
+                    </div>
+                    @for (child of group.children; track child.id) {
+                      <div
+                        class="position-entry position-child"
+                        [class.is-hovered]="child.type !== 'liquidation_order' && hoveredPositionId() === child.id"
+                        [attr.data-position-id]="child.id"
+                        [attr.data-order-type]="child.type"
+                        (mouseenter)="child.type !== 'liquidation_order' && hoverPosition(child.id)"
+                        (mouseleave)="child.type !== 'liquidation_order' && clearHoveredPosition(child.id)"
+                      >
+                        <div class="position-entry-heading">
+                          <span
+                            class="position-child-kind"
+                            [attr.data-order-type]="child.type"
+                          >{{ positionOrderLabel(child.type) }}</span>
+                          <span [class.position-long]="positionSideClass(child.side) === 'position-long'" [class.position-short]="positionSideClass(child.side) === 'position-short'">{{ positionSideLabel(child.side) }}</span>
+                        </div>
+                        <div class="position-entry-details">
+                          @if (child.type === 'increase_order') {
+                            <span>Size {{ formatDollarValue(child.value) }} × {{ formatPositionNumber(child.leverage) }}</span>
+                            <span>Entry {{ positionOrderPrice(child) }}</span>
+                          } @else {
+                            <span>Close Rate {{ formatCloseRate(child.close_rate) }}%</span>
+                            <span>Trigger {{ positionOrderPrice(child) }}</span>
+                          }
+                        </div>
+                      </div>
+                    }
+                  </div>
+                }
+                @for (group of openOrders(); track group.order.id) {
+                  <div class="position-group position-order-group">
+                    <div class="position-entry position-order" [class.is-hovered]="hoveredPositionId() === group.order.id" [attr.data-position-id]="group.order.id" (mouseenter)="hoverPosition(group.order.id)" (mouseleave)="clearHoveredPosition(group.order.id)">
+                      <div class="position-entry-heading">
+                        <strong>Order · <span [class.position-long]="positionSideClass(group.order.side) === 'position-long'" [class.position-short]="positionSideClass(group.order.side) === 'position-short'">{{ positionSideLabel(group.order.side) }}</span></strong>
+                      </div>
+                      <div class="position-entry-details">
+                        <span>Size {{ formatDollarValue(group.order.value) }} × {{ formatPositionNumber(group.order.leverage) }}</span>
+                        <span>Entry {{ formatPositionNumber(group.order.entry_price) }}</span>
+                      </div>
+                    </div>
+                    @for (child of group.children; track child.id) {
+                      <div
+                        class="position-entry position-child"
+                        [attr.data-position-id]="child.id"
+                        [attr.data-order-type]="child.type"
+                      >
+                        <div class="position-entry-heading">
+                          <span
+                            class="position-child-kind"
+                            [attr.data-order-type]="child.type"
+                          >{{ positionOrderLabel(child.type) }}</span>
+                          <span [class.position-long]="positionSideClass(child.side) === 'position-long'" [class.position-short]="positionSideClass(child.side) === 'position-short'">{{ positionSideLabel(child.side) }}</span>
+                        </div>
+                        <div class="position-entry-details">
+                          @if (child.type === 'increase_order') {
+                            <span>Size {{ formatDollarValue(child.value) }} × {{ formatPositionNumber(child.leverage) }}</span>
+                            <span>Entry {{ positionOrderPrice(child) }}</span>
+                          } @else {
+                            <span>Close Rate {{ formatCloseRate(child.close_rate) }}%</span>
+                            <span>Trigger {{ positionOrderPrice(child) }}</span>
+                          }
+                        </div>
+                      </div>
+                    }
+                  </div>
+                }
+                @if (positionItemCount() === 0) {
+                  <div class="position-empty">No active positions</div>
+                }
+              </div>
+            }
+          </section>
+        </div>
+      }
+    </aside>
+  </div>
+</div>
