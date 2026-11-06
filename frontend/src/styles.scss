@@ -1,4 +1,4 @@
-@use './app/app';
+@use './app/single-strategy-dashboard/single-strategy-dashboard.component';
 
 :root {
   color-scheme: dark;
@@ -46,4 +46,9 @@ body {
 
 button {
   font-family: inherit;
+}
+
+.not-available {
+  color: var(--text-secondary) !important;
+  opacity: 0.75;
 }

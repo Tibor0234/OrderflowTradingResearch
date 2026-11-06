@@ -1,0 +1,37 @@
+<div class="combinations-table-wrap">
+  <table>
+    <colgroup>
+      <col class="rank-column" />
+      <col span="3" />
+    </colgroup>
+    <thead>
+      <tr>
+        <th class="rank-header" scope="col">Rank</th>
+        <th scope="col">ID</th>
+        <th scope="col">ROI</th>
+        <th scope="col">Max DD</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (combination of combinations(); track combination.id; let rank = $index) {
+        <tr
+          [class.best-combination-row]="combination.id === bestCombinationId()"
+          [class.selected-combination-row]="combination.id === selectedCombinationId()"
+          [attr.aria-selected]="combination.id === selectedCombinationId()"
+          tabindex="0"
+          (click)="combinationSelected.emit(combination.id)"
+          (keydown)="selectOnKeyboard($event, combination.id)"
+        >
+          <td class="rank-cell">{{ rank + 1 }}</td>
+          <td class="combination-cell">{{ combination.id }}</td>
+          <td
+            class="combination-cell"
+            [class.positive]="combination.statistics.roi >= 0"
+            [class.negative]="combination.statistics.roi < 0"
+          >{{ formatPercent(combination.statistics.roi) }}</td>
+          <td class="combination-cell">{{ formatPercent(combination.statistics.maxDrawdown) }}</td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>

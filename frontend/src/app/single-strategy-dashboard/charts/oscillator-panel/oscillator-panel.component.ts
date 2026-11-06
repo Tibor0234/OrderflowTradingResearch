@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, OnChanges, Output } from '@angular/core';
 import { TimeSeriesPoint, Timeframe } from '../../../shared/models/market-data.models';
-import { CHART_PLOT_LEFT, CHART_PLOT_RIGHT, chartPointX } from '../../../shared/chart-layout';
+import { CHART_PLOT_LEFT, CHART_PLOT_RIGHT, chartPointX } from '../../chart-layout';
 
 interface DeltaBar {
   x: number;
@@ -72,7 +72,7 @@ export class OscillatorPanelComponent implements OnChanges {
 
   protected get currentValue(): string {
     const value = this.series[this.series.length - 1]?.value;
-    return value === undefined ? '—' : value.toLocaleString('en-US', { maximumFractionDigits: 1 });
+    return value === undefined ? 'N/A' : value.toLocaleString('en-US', { maximumFractionDigits: 1 });
   }
 
   protected formatTime(timestamp: number): string {

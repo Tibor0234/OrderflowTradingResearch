@@ -1,24 +1,26 @@
 import { Component, computed, DestroyRef, effect, inject, signal, untracked } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpErrorResponse } from '@angular/common/http';
-import { ContextChartComponent } from './features/context/context-chart.component';
-import { EquityCurveComponent } from './features/performance/equity-curve/equity-curve.component';
-import { MainPriceChartComponent } from './features/charts/main-price-chart/main-price-chart.component';
-import { MarketDataSocketService } from './core/services/market-data-socket.service';
-import { ReplayControlService } from './core/services/replay-control.service';
-import { environment } from '../environments/environment';
+import { ContextChartComponent } from './context/context-chart.component';
+import { EquityCurveComponent } from '../shared/charts/equity-curve/equity-curve.component';
+import { MainPriceChartComponent } from './charts/main-price-chart/main-price-chart.component';
+import { MarketDataSocketService } from '../core/services/market-data-socket.service';
+import { ReplayControlService } from '../shared/services/replay-control.service';
+import { environment } from '../../environments/environment';
 import {
   formatTimeframe as formatTimeframeLabel,
   Timeframe,
-} from './shared/models/market-data.models';
-import { OscillatorPanelComponent } from './features/charts/oscillator-panel/oscillator-panel.component';
+} from '../shared/models/market-data.models';
+import { OscillatorPanelComponent } from './charts/oscillator-panel/oscillator-panel.component';
+import { ConnectionIndicatorComponent } from '../shared/connection-indicator/connection-indicator.component';
+import { SurfaceNavigationComponent } from '../shared/surface-navigation/surface-navigation.component';
 import {
   AnalysisStatisticValue,
   LimitOrderPosition,
   PositionChild,
   TimeSeriesPoint,
   TradePosition,
-} from './shared/models/market-data.models';
+} from '../shared/models/market-data.models';
 
 type OscillatorKind = 'volumeDelta' | 'cvd' | 'openInterest';
 
@@ -52,7 +54,7 @@ const STATISTIC_LABELS: Readonly<Record<string, string>> = {
   pnl: 'PnL',
   roi: 'ROI',
   max_drawdown: 'Max Drawdown',
-  average_trade_duration: 'Average Trade Duration',
+  profit_factor: 'Profit Factor',
 };
 
 type AutoStopEvent = 'tradeOpen' | 'orderPlaced';
@@ -73,14 +75,14 @@ const QUOTE_ASSETS = [
 ];
 
 function getSymbolLogoUrl(symbol: string): string | null {
-  const normalizedSymbol = symbol
-    .trim()
-    .toUpperCase()
-    .replace(/[\s/_-]/g, '')
-    .replace(/(PERP|SWAP)$/, '');
-  if (!normalizedSymbol || normalizedSymbol === 'NONE' || normalizedSymbol === '—') {
+  const rawSymbol = symbol.trim().toUpperCase();
+  if (!rawSymbol || rawSymbol === 'NONE' || rawSymbol === 'N/A' || rawSymbol === '—') {
     return null;
   }
+
+  const normalizedSymbol = rawSymbol
+    .replace(/[\s/_-]/g, '')
+    .replace(/(PERP|SWAP)$/, '');
 
   const quoteAsset = QUOTE_ASSETS.find(
     (quote) => normalizedSymbol.length > quote.length && normalizedSymbol.endsWith(quote),
@@ -99,15 +101,17 @@ function getSymbolLogoUrl(symbol: string): string | null {
     EquityCurveComponent,
     MainPriceChartComponent,
     OscillatorPanelComponent,
+    ConnectionIndicatorComponent,
+    SurfaceNavigationComponent,
   ],
-  selector: 'app-root',
-  templateUrl: './app.html',
+  selector: 'app-dashboard',
+  templateUrl: './single-strategy-dashboard.component.html',
   host: {
     '(document:click)': 'handleDocumentClick($event)',
     '(document:keydown.escape)': 'closeOverlays()',
   },
 })
-export class App {
+export class SingleStrategyDashboardComponent {
   private readonly marketSocket = inject(MarketDataSocketService);
   private readonly replayControl = inject(ReplayControlService);
   private readonly destroyRef = inject(DestroyRef);
@@ -120,27 +124,35 @@ export class App {
   protected readonly reportExportPending = signal(false);
   protected readonly reportExportError = signal<string | null>(null);
   protected readonly timeframes = this.marketSocket.timeframes;
-  protected readonly connectionStatus = this.marketSocket.status;
-  protected readonly connectionError = this.marketSocket.error;
   protected readonly sessionStart = this.marketSocket.sessionStart;
   protected readonly processEnded = this.marketSocket.processEnded;
   protected readonly strategyName = computed(
-    () => this.sessionStart()?.strategy_name || '—',
+    () => {
+      const name = this.sessionStart()?.strategy_name.trim();
+      return this.isUnavailableValue(name) ? 'N/A' : name ?? 'N/A';
+    },
   );
   protected readonly sessionNumber = computed(() => {
-    const number = this.sessionStart()?.session_number ?? '—';
-    return /^\d$/.test(number) ? `0${number}` : number;
+    const number = this.sessionStart()?.session_number.trim();
+    if (this.isUnavailableValue(number)) return 'N/A';
+    return number && /^\d$/.test(number) ? `0${number}` : number ?? 'N/A';
   });
   protected readonly sessionSymbol = computed(() => {
-    const session = this.sessionStart();
-    return session ? session.symbol ?? 'None' : '—';
+    const symbol = this.sessionStart()?.symbol?.trim();
+    if (!symbol || symbol.toUpperCase() === 'NONE' || symbol === '—' || symbol.toUpperCase() === 'N/A') {
+      return 'N/A';
+    }
+    return symbol;
   });
   protected readonly symbolLogoUrl = computed(() =>
     getSymbolLogoUrl(this.sessionSymbol()),
   );
   protected readonly failedSymbolLogoUrl = signal<string | null>(null);
   protected readonly sessionProgress = computed(
-    () => this.sessionStart()?.progress || '—',
+    () => {
+      const progress = this.sessionStart()?.progress.trim();
+      return this.isUnavailableValue(progress) ? 'N/A' : progress ?? 'N/A';
+    },
   );
   protected readonly exportStatisticsDisabled = computed(() => {
     const progress = this.sessionStart()?.progress.trim().match(/^(\d+)(?:\s*\/\s*\d+)?$/);
@@ -257,21 +269,6 @@ export class App {
   });
   protected readonly contextChartExpanded = signal<Record<string, boolean>>({});
   protected readonly indicatorTitles = this.marketSocket.indicatorTitles;
-  protected readonly connectionLabel = computed(() => {
-    const hasData = this.chartData().candles.length > 0;
-    switch (this.connectionStatus()) {
-      case 'connected':
-        return hasData ? 'LIVE' : 'CONNECTED · WAITING FOR DATA';
-      case 'connecting':
-        return 'CONNECTING…';
-      case 'error':
-        return this.connectionError() ?? 'BACKEND UNAVAILABLE';
-      case 'closed':
-        return 'DISCONNECTED';
-      default:
-        return 'IDLE';
-    }
-  });
   protected readonly panelExpanded = signal<Record<string, boolean>>({
     dailyContext: true,
     weeklyContext: true,
@@ -428,13 +425,15 @@ export class App {
         this.pendingReplayAction = null;
         this.stopAfterReplayStarts = false;
         this.stopOnNextCandleUpdate = false;
-        this.replayRequestError.set(
-          error instanceof HttpErrorResponse
-            ? error.status === 0
-              ? 'Replay backend is unavailable.'
-              : `Replay request failed (HTTP ${error.status}).`
-            : 'Replay request failed.',
-        );
+        if (error instanceof HttpErrorResponse && error.status === 0) {
+          this.replayRequestError.set(null);
+        } else {
+          this.replayRequestError.set(
+            error instanceof HttpErrorResponse
+              ? `Replay request failed (HTTP ${error.status}).`
+              : 'Replay request failed.',
+          );
+        }
       },
     });
   }
@@ -657,8 +656,8 @@ export class App {
   protected positionOrderPrice(order: PositionChild): string {
     const price = order.type === 'increase_order'
       ? order.entry_price
-      : order.stop_price ?? '—';
-    return price === '—' ? price : this.formatPositionNumber(price);
+      : order.stop_price;
+    return this.isUnavailableValue(price) ? 'N/A' : this.formatPositionNumber(price ?? '');
   }
 
   protected positionSideClass(side: string | null): 'position-long' | 'position-short' | null {
@@ -672,26 +671,31 @@ export class App {
     const sideClass = this.positionSideClass(side);
     if (sideClass === 'position-long') return 'Long';
     if (sideClass === 'position-short') return 'Short';
-    return side ?? '—';
+    return this.isUnavailableValue(side) ? 'N/A' : side ?? 'N/A';
   }
 
   protected formatCloseRate(value: string): string {
+    if (this.isUnavailableValue(value)) return 'N/A';
     const rate = Number(value.replace(/,/g, '').trim());
-    if (!Number.isFinite(rate)) return value;
+    if (!Number.isFinite(rate)) return 'N/A';
     return this.formatPositionNumber(String(rate * 100));
   }
 
   protected formatDollarValue(value: string): string {
     const amount = value.trim();
+    if (this.isUnavailableValue(amount)) return 'N/A';
+    const formattedAmount = this.formatPositionNumber(amount.replace(/^-/, ''));
+    if (formattedAmount === 'N/A') return 'N/A';
     return amount.startsWith('-')
-      ? `-$${this.formatPositionNumber(amount.slice(1))}`
-      : `$${this.formatPositionNumber(amount)}`;
+      ? `-$${formattedAmount}`
+      : `$${formattedAmount}`;
   }
 
   protected formatPositionNumber(value: string): string {
     const normalized = value.replace(/,/g, '').trim();
+    if (this.isUnavailableValue(normalized)) return 'N/A';
     const number = Number(normalized);
-    if (!Number.isFinite(number)) return value;
+    if (!Number.isFinite(number)) return 'N/A';
     const fractionalDigits = normalized.match(/\.(\d+)/)?.[1].length ?? 0;
     return new Intl.NumberFormat('en-US', {
       maximumFractionDigits: 2,
@@ -707,7 +711,7 @@ export class App {
   }
 
   protected formatNewsMetric(value: number | undefined): string {
-    return value === undefined ? '—' : value.toFixed(2);
+    return value === undefined ? 'N/A' : value.toFixed(2);
   }
 
   protected formatNewsTime(timestamp: number): string {
@@ -755,9 +759,19 @@ export class App {
   }
 
   protected formatStatisticValue(key: string, value: AnalysisStatisticValue): string {
-    if (value === null) return '—';
+    if (value === null || (typeof value === 'string' && this.isUnavailableValue(value))) {
+      return 'N/A';
+    }
 
     const rawValue = String(value);
+    if (typeof value === 'number' && !Number.isFinite(value)) return 'N/A';
+    if (
+      typeof value === 'string' &&
+      ['pnl', 'winrate', 'roi', 'max_drawdown', 'profit_factor'].includes(key.toLowerCase()) &&
+      this.statisticNumber(value) === null
+    ) {
+      return 'N/A';
+    }
     const roundedValue =
       typeof value === 'boolean' ? rawValue : this.formatPositionNumber(rawValue);
     switch (key.toLowerCase()) {
@@ -777,16 +791,6 @@ export class App {
             : this.formatPositionNumber(String(numericValue * 100));
         return `${percentage}%`;
       }
-      case 'average_trade_duration': {
-        const seconds = this.statisticNumber(value);
-        if (seconds === null) return rawValue;
-        const totalSeconds = Math.floor(Math.abs(seconds));
-        const hours = Math.floor(totalSeconds / 3600);
-        const minutes = Math.floor((totalSeconds % 3600) / 60);
-        const remainingSeconds = totalSeconds % 60;
-        const sign = seconds < 0 ? '-' : '';
-        return `${sign}${hours}:${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`;
-      }
       default:
         return roundedValue;
     }
@@ -798,6 +802,7 @@ export class App {
     const normalizedKey = key.toLowerCase();
     return (
       (normalizedKey === 'winrate' && numericValue >= 0.5) ||
+      (normalizedKey === 'profit_factor' && numericValue >= 1) ||
       ((normalizedKey === 'pnl' || normalizedKey === 'roi') && numericValue >= 0)
     );
   }
@@ -808,6 +813,7 @@ export class App {
     const normalizedKey = key.toLowerCase();
     return (
       (normalizedKey === 'winrate' && numericValue < 0.5) ||
+      (normalizedKey === 'profit_factor' && numericValue < 1) ||
       ((normalizedKey === 'pnl' || normalizedKey === 'roi') && numericValue < 0)
     );
   }
@@ -824,6 +830,11 @@ export class App {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     });
+  }
+
+  protected isUnavailableValue(value: string | null | undefined): boolean {
+    const normalized = value?.trim().toUpperCase();
+    return !normalized || normalized === 'N/A' || normalized === '—' || normalized === 'NONE';
   }
 
   private resizePair(

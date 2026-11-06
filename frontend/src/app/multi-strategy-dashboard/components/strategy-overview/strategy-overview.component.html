@@ -1,0 +1,13 @@
+<section class="strategy-overview" aria-label="Strategy summary and market data progress">
+  <div class="overview-metrics">
+    <div class="overview-metric">
+      <span>Strategy</span>
+      <strong>{{ strategy().name }}</strong>
+    </div>
+    <div class="overview-metric combination-count">
+      <span>Parameter Combinations</span>
+      <strong>{{ formatNumber(strategy().totalParameterCombinations) }}</strong>
+    </div>
+  </div>
+  <app-market-data-progress [progress]="progress()" />
+</section>

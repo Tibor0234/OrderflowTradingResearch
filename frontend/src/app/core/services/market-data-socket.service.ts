@@ -282,15 +282,20 @@ export class MarketDataSocketService implements OnDestroy {
           'pnl',
           'roi',
           'max_drawdown',
-          'average_trade_duration',
+          'profit_factor',
         ];
         if (!this.isRecord(snapshotStatistics)) return null;
         const statistics: AnalysisStatistic[] = [];
         for (const key of requiredKeys) {
           const rawValue = snapshotStatistics[key];
+          if (key === 'profit_factor') {
+            if (rawValue !== null && typeof rawValue !== 'string') return null;
+            statistics.push({ key, value: rawValue });
+            continue;
+          }
           if (
             rawValue === null &&
-            (key === 'winrate' || key === 'average_trade_duration')
+            key === 'winrate'
           ) {
             statistics.push({ key, value: null });
             continue;
@@ -1152,6 +1157,7 @@ export class MarketDataSocketService implements OnDestroy {
     const statistics: AnalysisStatistic[] = [];
     for (const [key, value] of Object.entries(raw)) {
       if (key.trim() === '' || !this.isAnalysisStatisticValue(value)) return null;
+      if (key === 'profit_factor' && value !== null && typeof value !== 'string') return null;
       statistics.push({ key, value });
     }
     return statistics;

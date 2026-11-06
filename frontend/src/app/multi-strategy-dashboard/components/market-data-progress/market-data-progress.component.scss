@@ -1,0 +1,48 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.market-data-progress {
+  min-width: 0;
+  padding-top: 10px;
+}
+
+.section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.section-heading h2 {
+  margin: 0;
+  font-size: 14px;
+}
+
+.progress-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.progress-track {
+  flex: 1;
+  height: 10px;
+  border-radius: 3px;
+  background: var(--surface-3);
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #4c8ee8, #87c6ff);
+}
+
+.progress-value {
+  min-width: 52px;
+  color: #b8d5ff;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}

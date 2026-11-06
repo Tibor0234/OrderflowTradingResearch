@@ -3,7 +3,7 @@
     <h2>{{ title }}</h2>
     <div class="oscillator-meta">
       @if (expanded) {
-        <span>{{ currentValue }}</span>
+        <span [class.not-available]="currentValue === 'N/A'">{{ currentValue }}</span>
       }
       <button type="button" [attr.aria-label]="(expanded ? 'Collapse ' : 'Expand ') + title" [attr.aria-expanded]="expanded" (click)="toggleExpanded()">
         <span aria-hidden="true">{{ expanded ? '⌄' : '›' }}</span>

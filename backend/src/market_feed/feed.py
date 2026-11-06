@@ -80,7 +80,6 @@ class MarketFeed:
             DataProvider().set_symbol(self.session_pair_manager.counter.symbol)
 
             await self._replay_session_pair(session_pair)
-            await asyncio.sleep(0)
 
     async def _replay_session_pair(self, session_pair):
         """Replay all market data sources for a single session pair."""

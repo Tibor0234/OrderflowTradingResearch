@@ -1,0 +1,130 @@
+:host {
+  display: block;
+  height: 100dvh;
+}
+
+.monitor-page {
+  display: grid;
+  height: 100%;
+  grid-template-rows: 58px minmax(0, 1fr);
+  background: var(--surface-0);
+  color: var(--text-primary);
+}
+
+.monitor-header {
+  z-index: 2;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 16px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-1);
+}
+
+.multi-header-controls {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+  justify-self: start;
+}
+
+.monitor-workspace {
+  display: grid;
+  min-width: 0;
+  min-height: 0;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  overflow: hidden;
+}
+
+.monitor-workspace.parameter-combinations-collapsed {
+  grid-template-columns: minmax(0, 1fr) 36px;
+}
+
+.multi-replay-controls {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.multi-replay-controls .multi-play-button {
+  border: 1px solid #176b53;
+  border-radius: 5px;
+  background: rgba(25, 201, 149, 0.08);
+}
+
+.multi-replay-controls .multi-play-button:hover:not(:disabled) {
+  border-color: rgba(25, 201, 149, 0.45);
+  background: rgba(25, 201, 149, 0.16);
+}
+
+.replay-error {
+  overflow: hidden;
+  color: var(--red);
+  font-size: var(--font-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.monitor-content {
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  padding: 16px 20px 20px;
+}
+
+.parameter-sidebar {
+  min-width: 0;
+  min-height: 0;
+}
+
+.parameter-panels {
+  padding: 10px;
+}
+
+.select-top-button {
+  display: block;
+  width: 100%;
+  margin-bottom: 8px;
+  padding: 7px 10px;
+  border: 1px solid rgba(93, 161, 255, 0.35);
+  border-radius: 4px;
+  background: rgba(93, 161, 255, 0.06);
+  color: var(--text-primary);
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+}
+
+.select-top-button:hover {
+  background: rgba(93, 161, 255, 0.14);
+}
+
+.select-top-button[aria-pressed='true'] {
+  border-color: rgba(93, 161, 255, 0.7);
+  background: rgba(93, 161, 255, 0.16);
+}
+
+@media (max-width: 820px) {
+  .monitor-header {
+    column-gap: 8px;
+    padding-inline: 8px;
+  }
+
+  .multi-header-controls {
+    gap: 5px;
+  }
+
+  .monitor-workspace:not(.parameter-combinations-collapsed) {
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 46vw);
+  }
+
+  .monitor-content {
+    padding: 12px;
+  }
+}

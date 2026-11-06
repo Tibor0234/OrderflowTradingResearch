@@ -1,4 +1,4 @@
-app-root {
+:host {
   display: block;
   height: 100dvh;
   min-height: 440px;
@@ -15,9 +15,9 @@ app-root {
 
 .topbar {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  column-gap: 26px;
+  column-gap: 18px;
   padding: 0 16px;
   border-bottom: 1px solid var(--border);
   background: var(--surface-1);
@@ -27,7 +27,6 @@ app-root {
 
 .topbar-controls,
 .session-summary,
-.connection-indicator,
 .panel-heading,
 .timeframe-controls {
   display: flex;
@@ -42,23 +41,12 @@ app-root {
 }
 
 .session-summary {
-  justify-self: center;
+  flex: 0 0 auto;
+  margin-left: auto;
+  justify-content: center;
   gap: 0;
   min-width: 0;
-  padding: 5px 7px;
-  border: 1px solid rgba(130, 157, 177, 0.24);
-  border-radius: 10px;
-  background:
-    radial-gradient(ellipse at 8% 0%, rgba(25, 201, 149, 0.1), transparent 42%),
-    linear-gradient(120deg, rgba(33, 45, 57, 0.96), rgba(20, 28, 37, 0.98));
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.055),
-    0 4px 16px rgba(0, 0, 0, 0.2);
   white-space: nowrap;
-}
-
-.connection-indicator {
-  justify-self: end;
 }
 
 .topbar-divider {
@@ -313,11 +301,6 @@ app-root {
   font-size: var(--font-xs);
 }
 
-.export-divider {
-  height: 24px;
-  margin: 0 2px;
-}
-
 .export-button {
   display: grid;
   place-items: center;
@@ -371,14 +354,6 @@ app-root {
 
 .session-progress strong {
   color: var(--text-primary);
-}
-
-.live-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--green);
-  box-shadow: 0 0 8px rgba(25, 201, 149, 0.5);
 }
 
 .terminal-grid {
@@ -474,6 +449,10 @@ app-root {
   background: var(--surface-1);
 }
 
+.workspace .panel {
+  background: var(--surface-0);
+}
+
 .left-panels > .panel,
 .right-panels > .panel {
   border-bottom: 1px solid var(--border);
@@ -555,22 +534,16 @@ app-root {
   color: var(--green);
 }
 
-.connection-indicator {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  justify-self: end;
-  color: var(--text-muted);
-  font-size: var(--font-sm);
-  letter-spacing: 0.04em;
-  white-space: nowrap;
-}
-
 .toolbar-divider {
   width: 1px;
   height: 12px;
   margin: 0 3px;
   background: var(--border);
+}
+
+.navigation-divider {
+  height: 28px;
+  margin: 0 2px;
 }
 
 .workspace {
@@ -640,7 +613,9 @@ body.resizing-chart-panels {
 }
 
 .main-chart-panel > .panel-heading {
-  flex: 0 0 44px;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  min-height: 44px;
 }
 
 .news-panel .panel-heading {
@@ -969,7 +944,7 @@ td:last-child {
   }
 
   .topbar {
-    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) auto;
     column-gap: 6px;
     padding-inline: 9px;
   }
@@ -1018,7 +993,31 @@ td:last-child {
     font-size: 12px;
   }
 
-  .connection-indicator .connection-status {
+  .session-summary .topbar-divider {
+    height: 20px;
+  }
+
+  .session-summary .summary-item {
+    min-width: 0;
+    padding: 0 5px;
+  }
+
+  .summary-label {
+    font-size: 8px;
+  }
+
+  .brand-name {
+    max-width: 72px;
+    font-size: 10px;
+  }
+
+  .session-count strong,
+  .session-progress strong,
+  .symbol-button {
+    font-size: 10px;
+  }
+
+  .session-summary .symbol-logo {
     display: none;
   }
 
@@ -1062,23 +1061,4 @@ td:last-child {
   .main-chart-panel {
     min-height: 120px !important;
   }
-}
-
-.live-dot:not(.connected) {
-  background: var(--text-muted);
-  box-shadow: none;
-}
-
-.connection-status {
-  color: var(--text-muted);
-  font-size: var(--font-sm);
-}
-
-.connection-status[data-status="error"],
-.connection-status[data-status="closed"] {
-  color: var(--red);
-}
-
-.connection-status[data-status="connected"] {
-  color: var(--green);
 }

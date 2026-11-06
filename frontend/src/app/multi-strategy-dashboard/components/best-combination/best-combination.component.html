@@ -1,0 +1,69 @@
+<section class="best-section" aria-labelledby="best-section-title">
+  <div class="section-heading best-heading">
+    <h2 id="best-section-title">
+      <strong class="best-combination-id">{{ combination().id }}</strong>
+    </h2>
+    <span class="combination-rank" [class.top-rank]="rank() === 1">Rank #{{ rank() }}</span>
+  </div>
+
+  <div class="best-details-grid">
+    <section class="detail-section equity-panel" aria-labelledby="equity-title">
+      <h3 id="equity-title">Equity Curve</h3>
+      <app-equity-curve
+        [points]="combination().equityCurve.points"
+        [startingBalance]="combination().equityCurve.startingBalance"
+        [aspectRatio]="equityCurveAspectRatio"
+        [compactAxisLabels]="true"
+        [prominentValueLabels]="true"
+      />
+    </section>
+    <div class="insights-grid">
+      <section class="detail-section performance-panel" aria-labelledby="performance-title">
+        <h3 id="performance-title">Performance Statistics</h3>
+        <div class="statistics-grid" aria-label="Combination performance statistics">
+          <article class="stat-item">
+            <span>Total Trades</span>
+            <strong>{{ formatNumber(combination().statistics.totalTrades) }}</strong>
+          </article>
+          <article class="stat-item">
+            <span>Winrate</span>
+            <strong>{{ formatPercent(combination().statistics.winrate) }}</strong>
+          </article>
+          <article class="stat-item">
+            <span>PnL</span>
+            <strong
+              [class.positive]="combination().statistics.pnl >= 0"
+              [class.negative]="combination().statistics.pnl < 0"
+            >{{ formatCurrency(combination().statistics.pnl) }}</strong>
+          </article>
+          <article class="stat-item">
+            <span>ROI</span>
+            <strong
+              [class.positive]="combination().statistics.roi >= 0"
+              [class.negative]="combination().statistics.roi < 0"
+            >{{ formatPercent(combination().statistics.roi) }}</strong>
+          </article>
+          <article class="stat-item">
+            <span>Max DD</span>
+            <strong>{{ formatPercent(combination().statistics.maxDrawdown) }}</strong>
+          </article>
+          <article class="stat-item">
+            <span>Profit Factor</span>
+            <strong>{{ combination().statistics.profitFactor.toFixed(2) }}</strong>
+          </article>
+        </div>
+      </section>
+      <section class="detail-section parameters-panel" aria-labelledby="parameters-title">
+        <h3 id="parameters-title">Combination Parameters</h3>
+        <dl class="parameter-grid">
+          @for (parameter of parameters(); track parameter.name) {
+            <div class="parameter-item">
+              <dt>{{ parameter.name }}</dt>
+              <dd>{{ formatParameter(parameter.value) }}</dd>
+            </div>
+          }
+        </dl>
+      </section>
+    </div>
+  </div>
+</section>

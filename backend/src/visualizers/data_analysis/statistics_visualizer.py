@@ -70,5 +70,5 @@ class StatisticsVisualizer:
             "pnl": f"{model.pnl}",
             "roi": f"{model.roi}",
             "max_drawdown": f"{model.max_drawdown}",
-            "average_trade_duration": model.average_trade_duration,
+            "profit_factor": f"{model.profit_factor}" if model.profit_factor is not None else None,
         }

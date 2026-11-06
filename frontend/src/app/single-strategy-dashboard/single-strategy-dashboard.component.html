@@ -1,6 +1,11 @@
 <div class="dashboard">
   <header class="topbar">
     <div class="topbar-controls">
+      <app-surface-navigation
+        target="/multi-strategy-monitor"
+        label="Open multi-strategy monitor"
+      />
+      <span class="toolbar-divider navigation-divider" aria-hidden="true"></span>
       <div class="replay-controls">
         <button
           class="play-button"
@@ -66,7 +71,6 @@
       @if (replayRequestError(); as replayError) {
         <span class="replay-error" role="alert">{{ replayError }}</span>
       }
-      <span class="toolbar-divider export-divider" aria-hidden="true"></span>
       <button
         class="export-button"
         type="button"
@@ -84,48 +88,7 @@
         <span class="export-error" role="alert">{{ exportError }}</span>
       }
     </div>
-    <div class="session-summary">
-      <div class="summary-item strategy-summary">
-        <span class="summary-label">STRATEGY</span>
-        <strong class="brand-name">{{ strategyName() }}</strong>
-      </div>
-      <span class="topbar-divider" aria-hidden="true"></span>
-      <div class="summary-item session-count">
-        <span class="summary-label">SESSION</span>
-        <strong>{{ sessionNumber() }}</strong>
-      </div>
-      <span class="topbar-divider" aria-hidden="true"></span>
-      <div
-        class="summary-item symbol-summary"
-        [class.has-logo]="symbolLogoUrl() !== null && failedSymbolLogoUrl() !== symbolLogoUrl()"
-      >
-        <span class="summary-label">SYMBOL</span>
-        <strong class="symbol-button" [attr.aria-label]="'Selected symbol ' + sessionSymbol()">
-          <span>{{ sessionSymbol() }}</span>
-        </strong>
-        @if (symbolLogoUrl(); as logoUrl) {
-          @if (failedSymbolLogoUrl() !== logoUrl) {
-            <img
-              class="symbol-logo"
-              [src]="logoUrl"
-              alt=""
-              aria-hidden="true"
-              (error)="handleSymbolLogoError(logoUrl)"
-            />
-          }
-        }
-      </div>
-      <span class="topbar-divider" aria-hidden="true"></span>
-      <div class="summary-item session-progress">
-        <span class="summary-label">PROGRESS</span>
-        <strong>{{ sessionProgress() }}</strong>
-      </div>
-    </div>
-
-    <div class="connection-indicator">
-      <span class="live-dot" [class.connected]="connectionStatus() === 'connected'" aria-hidden="true"></span>
-      <span class="connection-status" [attr.data-status]="connectionStatus()">{{ connectionLabel() }}</span>
-    </div>
+    <app-connection-indicator />
   </header>
 
   <div class="terminal-grid" [class.left-collapsed]="leftCollapsed()" [class.right-collapsed]="rightCollapsed()">
@@ -133,7 +96,7 @@
       @if (leftCollapsed()) {
         <button class="collapsed-rail" type="button" aria-label="Expand left sidebar" title="Expand left sidebar" (click)="leftCollapsed.set(false)">
           <span aria-hidden="true">›</span>
-          <span class="rail-label">CONTEXT</span>
+          <span class="rail-label">MARKET CONTEXT</span>
         </button>
       } @else {
         <div class="sidebar-heading">
@@ -168,19 +131,20 @@
                       class="news-sentiment"
                       [class.positive]="news.aggregated !== null && news.aggregated.sentiment >= 0"
                       [class.negative]="news.aggregated !== null && news.aggregated.sentiment < 0"
+                      [class.not-available]="news.aggregated?.sentiment === undefined"
                     >{{ formatNewsMetric(news.aggregated?.sentiment) }}</dd>
                   </div>
                   <div class="news-aggregate">
                     <dt>Severity</dt>
-                    <dd>{{ formatNewsMetric(news.aggregated?.severity) }}</dd>
+                    <dd [class.not-available]="news.aggregated?.severity === undefined">{{ formatNewsMetric(news.aggregated?.severity) }}</dd>
                   </div>
                   <div class="news-aggregate">
                     <dt>Market Relevance</dt>
-                    <dd>{{ formatNewsMetric(news.aggregated?.market_relevance) }}</dd>
+                    <dd [class.not-available]="news.aggregated?.market_relevance === undefined">{{ formatNewsMetric(news.aggregated?.market_relevance) }}</dd>
                   </div>
                   <div class="news-aggregate">
                     <dt>Symbol Relevance</dt>
-                    <dd>{{ formatNewsMetric(news.aggregated?.symbol_relevance) }}</dd>
+                    <dd [class.not-available]="news.aggregated?.symbol_relevance === undefined">{{ formatNewsMetric(news.aggregated?.symbol_relevance) }}</dd>
                   </div>
                 </dl>
                 <div class="news-list">
@@ -211,6 +175,43 @@
               @for (timeframe of timeframes(); track timeframe) {
                 <button type="button" [class.selected]="selectedTimeframe() === timeframe" [attr.aria-pressed]="selectedTimeframe() === timeframe" (click)="selectTimeframe(timeframe)">{{ formatTimeframe(timeframe) }}</button>
               }
+            </div>
+            <div class="session-summary">
+              <div class="summary-item strategy-summary">
+                <span class="summary-label">STRATEGY</span>
+                <strong class="brand-name" [class.not-available]="strategyName() === 'N/A'">{{ strategyName() }}</strong>
+              </div>
+              <span class="topbar-divider" aria-hidden="true"></span>
+              <div class="summary-item session-count">
+                <span class="summary-label">SESSION</span>
+                <strong [class.not-available]="sessionNumber() === 'N/A'">{{ sessionNumber() }}</strong>
+              </div>
+              <span class="topbar-divider" aria-hidden="true"></span>
+              <div
+                class="summary-item symbol-summary"
+                [class.has-logo]="symbolLogoUrl() !== null && failedSymbolLogoUrl() !== symbolLogoUrl()"
+              >
+                <span class="summary-label">SYMBOL</span>
+                <strong class="symbol-button" [attr.aria-label]="'Selected symbol ' + sessionSymbol()">
+                  <span [class.not-available]="sessionSymbol() === 'N/A'">{{ sessionSymbol() }}</span>
+                </strong>
+                @if (symbolLogoUrl(); as logoUrl) {
+                  @if (failedSymbolLogoUrl() !== logoUrl) {
+                    <img
+                      class="symbol-logo"
+                      [src]="logoUrl"
+                      alt=""
+                      aria-hidden="true"
+                      (error)="handleSymbolLogoError(logoUrl)"
+                    />
+                  }
+                }
+              </div>
+              <span class="topbar-divider" aria-hidden="true"></span>
+              <div class="summary-item session-progress">
+                <span class="summary-label">PROGRESS</span>
+                <strong [class.not-available]="sessionProgress() === 'N/A'">{{ sessionProgress() }}</strong>
+              </div>
             </div>
           </div>
           <app-main-price-chart
@@ -272,7 +273,7 @@
       @if (rightCollapsed()) {
         <button class="collapsed-rail" type="button" aria-label="Expand right sidebar" title="Expand right sidebar" (click)="rightCollapsed.set(false)">
           <span aria-hidden="true">‹</span>
-          <span class="rail-label">ACTIVITY</span>
+          <span class="rail-label">PERFORMANCE</span>
         </button>
       } @else {
         <div class="sidebar-heading">
@@ -313,6 +314,7 @@
                         <dd
                           [class.positive]="isPositiveStatistic(item.key, item.value)"
                           [class.negative]="isNegativeStatistic(item.key, item.value)"
+                          [class.not-available]="isUnavailableValue(formatStatisticValue(item.key, item.value))"
                         >{{ formatStatisticValue(item.key, item.value) }}</dd>
                       </div>
                     }
@@ -338,12 +340,12 @@
                   <div class="position-group position-trade-group">
                     <div class="position-entry position-trade" [class.is-hovered]="hoveredPositionId() === group.trade.id" [attr.data-position-id]="group.trade.id" (mouseenter)="hoverPosition(group.trade.id)" (mouseleave)="clearHoveredPosition(group.trade.id)">
                       <div class="position-entry-heading">
-                        <strong>Trade · <span [class.position-long]="positionSideClass(group.trade.side) === 'position-long'" [class.position-short]="positionSideClass(group.trade.side) === 'position-short'">{{ positionSideLabel(group.trade.side) }}</span></strong>
-                        <span [class.positive]="positionPnlClass(group.trade.pnl) === 'positive'" [class.negative]="positionPnlClass(group.trade.pnl) === 'negative'">PnL {{ formatDollarValue(group.trade.pnl) }}</span>
+                        <strong>Trade · <span [class.position-long]="positionSideClass(group.trade.side) === 'position-long'" [class.position-short]="positionSideClass(group.trade.side) === 'position-short'" [class.not-available]="isUnavailableValue(positionSideLabel(group.trade.side))">{{ positionSideLabel(group.trade.side) }}</span></strong>
+                        <span [class.positive]="positionPnlClass(group.trade.pnl) === 'positive'" [class.negative]="positionPnlClass(group.trade.pnl) === 'negative'">PnL <span [class.not-available]="isUnavailableValue(formatDollarValue(group.trade.pnl))">{{ formatDollarValue(group.trade.pnl) }}</span></span>
                       </div>
                       <div class="position-entry-details">
-                        <span>Size {{ formatDollarValue(group.trade.value) }} × {{ formatPositionNumber(group.trade.leverage) }}</span>
-                        <span>Entry {{ formatPositionNumber(group.trade.execution_price) }}</span>
+                        <span>Size <span [class.not-available]="isUnavailableValue(formatDollarValue(group.trade.value))">{{ formatDollarValue(group.trade.value) }}</span> × <span [class.not-available]="isUnavailableValue(formatPositionNumber(group.trade.leverage))">{{ formatPositionNumber(group.trade.leverage) }}</span></span>
+                        <span>Entry <span [class.not-available]="isUnavailableValue(formatPositionNumber(group.trade.execution_price))">{{ formatPositionNumber(group.trade.execution_price) }}</span></span>
                       </div>
                     </div>
                     @for (child of group.children; track child.id) {
@@ -360,15 +362,15 @@
                             class="position-child-kind"
                             [attr.data-order-type]="child.type"
                           >{{ positionOrderLabel(child.type) }}</span>
-                          <span [class.position-long]="positionSideClass(child.side) === 'position-long'" [class.position-short]="positionSideClass(child.side) === 'position-short'">{{ positionSideLabel(child.side) }}</span>
+                          <span [class.position-long]="positionSideClass(child.side) === 'position-long'" [class.position-short]="positionSideClass(child.side) === 'position-short'" [class.not-available]="isUnavailableValue(positionSideLabel(child.side))">{{ positionSideLabel(child.side) }}</span>
                         </div>
                         <div class="position-entry-details">
                           @if (child.type === 'increase_order') {
-                            <span>Size {{ formatDollarValue(child.value) }} × {{ formatPositionNumber(child.leverage) }}</span>
-                            <span>Entry {{ positionOrderPrice(child) }}</span>
+                            <span>Size <span [class.not-available]="isUnavailableValue(formatDollarValue(child.value))">{{ formatDollarValue(child.value) }}</span> × <span [class.not-available]="isUnavailableValue(formatPositionNumber(child.leverage))">{{ formatPositionNumber(child.leverage) }}</span></span>
+                            <span>Entry <span [class.not-available]="isUnavailableValue(positionOrderPrice(child))">{{ positionOrderPrice(child) }}</span></span>
                           } @else {
-                            <span>Close Rate {{ formatCloseRate(child.close_rate) }}%</span>
-                            <span>Trigger {{ positionOrderPrice(child) }}</span>
+                            <span>Close Rate <span [class.not-available]="isUnavailableValue(formatCloseRate(child.close_rate))">{{ formatCloseRate(child.close_rate) }}{{ isUnavailableValue(formatCloseRate(child.close_rate)) ? '' : '%' }}</span></span>
+                            <span>Trigger <span [class.not-available]="isUnavailableValue(positionOrderPrice(child))">{{ positionOrderPrice(child) }}</span></span>
                           }
                         </div>
                       </div>
@@ -379,11 +381,11 @@
                   <div class="position-group position-order-group">
                     <div class="position-entry position-order" [class.is-hovered]="hoveredPositionId() === group.order.id" [attr.data-position-id]="group.order.id" (mouseenter)="hoverPosition(group.order.id)" (mouseleave)="clearHoveredPosition(group.order.id)">
                       <div class="position-entry-heading">
-                        <strong>Order · <span [class.position-long]="positionSideClass(group.order.side) === 'position-long'" [class.position-short]="positionSideClass(group.order.side) === 'position-short'">{{ positionSideLabel(group.order.side) }}</span></strong>
+                        <strong>Order · <span [class.position-long]="positionSideClass(group.order.side) === 'position-long'" [class.position-short]="positionSideClass(group.order.side) === 'position-short'" [class.not-available]="isUnavailableValue(positionSideLabel(group.order.side))">{{ positionSideLabel(group.order.side) }}</span></strong>
                       </div>
                       <div class="position-entry-details">
-                        <span>Size {{ formatDollarValue(group.order.value) }} × {{ formatPositionNumber(group.order.leverage) }}</span>
-                        <span>Entry {{ formatPositionNumber(group.order.entry_price) }}</span>
+                        <span>Size <span [class.not-available]="isUnavailableValue(formatDollarValue(group.order.value))">{{ formatDollarValue(group.order.value) }}</span> × <span [class.not-available]="isUnavailableValue(formatPositionNumber(group.order.leverage))">{{ formatPositionNumber(group.order.leverage) }}</span></span>
+                        <span>Entry <span [class.not-available]="isUnavailableValue(formatPositionNumber(group.order.entry_price))">{{ formatPositionNumber(group.order.entry_price) }}</span></span>
                       </div>
                     </div>
                     @for (child of group.children; track child.id) {
@@ -397,15 +399,15 @@
                             class="position-child-kind"
                             [attr.data-order-type]="child.type"
                           >{{ positionOrderLabel(child.type) }}</span>
-                          <span [class.position-long]="positionSideClass(child.side) === 'position-long'" [class.position-short]="positionSideClass(child.side) === 'position-short'">{{ positionSideLabel(child.side) }}</span>
+                          <span [class.position-long]="positionSideClass(child.side) === 'position-long'" [class.position-short]="positionSideClass(child.side) === 'position-short'" [class.not-available]="isUnavailableValue(positionSideLabel(child.side))">{{ positionSideLabel(child.side) }}</span>
                         </div>
                         <div class="position-entry-details">
                           @if (child.type === 'increase_order') {
-                            <span>Size {{ formatDollarValue(child.value) }} × {{ formatPositionNumber(child.leverage) }}</span>
-                            <span>Entry {{ positionOrderPrice(child) }}</span>
+                            <span>Size <span [class.not-available]="isUnavailableValue(formatDollarValue(child.value))">{{ formatDollarValue(child.value) }}</span> × <span [class.not-available]="isUnavailableValue(formatPositionNumber(child.leverage))">{{ formatPositionNumber(child.leverage) }}</span></span>
+                            <span>Entry <span [class.not-available]="isUnavailableValue(positionOrderPrice(child))">{{ positionOrderPrice(child) }}</span></span>
                           } @else {
-                            <span>Close Rate {{ formatCloseRate(child.close_rate) }}%</span>
-                            <span>Trigger {{ positionOrderPrice(child) }}</span>
+                            <span>Close Rate <span [class.not-available]="isUnavailableValue(formatCloseRate(child.close_rate))">{{ formatCloseRate(child.close_rate) }}{{ isUnavailableValue(formatCloseRate(child.close_rate)) ? '' : '%' }}</span></span>
+                            <span>Trigger <span [class.not-available]="isUnavailableValue(positionOrderPrice(child))">{{ positionOrderPrice(child) }}</span></span>
                           }
                         </div>
                       </div>

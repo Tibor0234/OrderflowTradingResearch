@@ -9,6 +9,10 @@
   padding: 6px 8px 4px 12px;
 }
 
+.equity-chart.aspect-ratio-chart {
+  height: auto;
+}
+
 .equity-chart svg {
   display: block;
   width: 100%;
@@ -29,6 +33,11 @@
   font-family: inherit;
   font-size: 11px;
   font-variant-numeric: tabular-nums;
+}
+
+.equity-chart.compact-axis-labels .equity-grid text,
+.equity-chart.compact-axis-labels .equity-time-axis text {
+  font-size: 7px;
 }
 
 .equity-area {
@@ -80,9 +89,14 @@
   pointer-events: none;
 }
 
+.equity-chart.prominent-value-labels .current-equity-label,
+.equity-chart.prominent-value-labels .starting-equity-label {
+  font-size: 12px;
+}
+
 @media (max-width: 760px) {
-  .equity-grid text,
-  .equity-time-axis text {
+  .equity-chart:not(.compact-axis-labels) .equity-grid text,
+  .equity-chart:not(.compact-axis-labels) .equity-time-axis text {
     font-size: 13px;
   }
 }

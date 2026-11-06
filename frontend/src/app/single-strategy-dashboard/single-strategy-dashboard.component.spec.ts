@@ -1,11 +1,12 @@
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideRouter } from '@angular/router';
 import { vi } from 'vitest';
-import { App } from './app';
-import { MarketDataSocketService } from './core/services/market-data-socket.service';
-import { formatTimeframe, Timeframe } from './shared/models/market-data.models';
-import { environment } from '../environments/environment';
+import { SingleStrategyDashboardComponent as App } from './single-strategy-dashboard.component';
+import { MarketDataSocketService } from '../core/services/market-data-socket.service';
+import { formatTimeframe, Timeframe } from '../shared/models/market-data.models';
+import { environment } from '../../environments/environment';
 
 class FakeWebSocket {
   static readonly OPEN = 1;
@@ -145,13 +146,13 @@ function waitForDisplayUpdate(): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, 40));
 }
 
-describe('App dashboard', () => {
+describe('SingleStrategyDashboardComponent', () => {
   beforeEach(async () => {
     FakeWebSocket.instances = [];
     vi.stubGlobal('WebSocket', FakeWebSocket);
     await TestBed.configureTestingModule({
       imports: [App],
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
     }).compileComponents();
   });
 
@@ -164,8 +165,10 @@ describe('App dashboard', () => {
     await fixture.whenStable();
     const root = fixture.nativeElement as HTMLElement;
     const socket = FakeWebSocket.instances[0];
-    expect(root.querySelector('.session-count strong')?.textContent).toBe('—');
-    expect(root.querySelector('.symbol-button')?.textContent?.trim()).toBe('—');
+    expect(root.querySelector('.session-count strong')?.textContent).toBe('N/A');
+    expect(root.querySelector('.session-count strong')?.classList.contains('not-available')).toBe(true);
+    expect(root.querySelector('.symbol-button')?.textContent?.trim()).toBe('N/A');
+    expect(root.querySelector('.symbol-button .not-available')?.textContent?.trim()).toBe('N/A');
     socket.open();
     initContextTarget(socket, '1', '1D');
     initContextTarget(socket, '2', '1W');
@@ -364,7 +367,9 @@ describe('App dashboard', () => {
     expect(root.querySelector('[data-position-id="take-1"] .position-entry-details')?.textContent)
       .toContain('Trigger 115.35');
     expect(root.querySelector('[data-position-id="liquidation-1"] .position-entry-details')?.textContent)
-      .toContain('Trigger —');
+      .toContain('Trigger N/A');
+    expect(root.querySelector('[data-position-id="liquidation-1"] .position-entry-details .not-available')?.textContent)
+      .toBe('N/A');
     expect(root.querySelector('[data-position-id="liquidation-1"] .position-entry-heading > span:last-child')?.textContent)
       .toBe('Short');
     expect(root.querySelector('[data-position-id="liquidation-1"] .position-entry-heading .position-short'))
@@ -625,7 +630,8 @@ describe('App dashboard', () => {
     const socket = FakeWebSocket.instances[0];
     socket.open();
 
-    expect(root.querySelector('.brand-name')?.textContent).toBe('—');
+    expect(root.querySelector('.brand-name')?.textContent).toBe('N/A');
+    expect(root.querySelector('.brand-name')?.classList.contains('not-available')).toBe(true);
 
     socket.receive({
       type: 'session_start',
@@ -642,6 +648,8 @@ describe('App dashboard', () => {
     expect(root.querySelector('.brand-mark')).toBeNull();
     expect(root.querySelector('.topbar-controls .play-button')).toBeTruthy();
     expect(root.querySelector('.session-meta')).toBeNull();
+    expect(root.querySelector('.topbar .session-summary')).toBeNull();
+    expect(root.querySelector('.main-chart-panel .session-summary')).toBeTruthy();
     expect(root.querySelectorAll('.session-summary .topbar-divider')).toHaveLength(3);
     expect(root.querySelector('.session-count')?.textContent).toContain('04');
     expect(root.querySelector('.symbol-button')?.textContent?.trim()).toBe('ETHUSDT');
@@ -672,7 +680,8 @@ describe('App dashboard', () => {
       },
     });
     fixture.detectChanges();
-    expect(root.querySelector('.symbol-button')?.textContent?.trim()).toBe('None');
+    expect(root.querySelector('.symbol-button')?.textContent?.trim()).toBe('N/A');
+    expect(root.querySelector('.symbol-button .not-available')?.textContent?.trim()).toBe('N/A');
     expect(root.querySelector('.symbol-logo')).toBeNull();
     expect(root.querySelector('.session-count')?.textContent).toContain('05');
   });
@@ -849,11 +858,12 @@ describe('App dashboard', () => {
     fixture.detectChanges();
     expect(root.querySelector('.news-panel h2')?.textContent).toContain('News');
     expect(Array.from(root.querySelectorAll('.news-aggregate dd'), (value) => value.textContent)).toEqual([
-      '—',
-      '—',
-      '—',
-      '—',
+      'N/A',
+      'N/A',
+      'N/A',
+      'N/A',
     ]);
+    expect(Array.from(root.querySelectorAll('.news-aggregate dd.not-available'))).toHaveLength(4);
 
     const firstTime = 1_793_064_960_000;
     const updates = [
@@ -963,6 +973,24 @@ describe('App dashboard', () => {
     fixture.detectChanges();
 
     expect(button.getAttribute('aria-label')).toBe('Play replay');
+    httpTesting.verify();
+  });
+
+  it('silently ignores a replay start when the backend is unavailable', async () => {
+    const fixture = TestBed.createComponent(App);
+    await fixture.whenStable();
+    const root = fixture.nativeElement as HTMLElement;
+    const httpTesting = TestBed.inject(HttpTestingController);
+    const button = root.querySelector<HTMLButtonElement>('.play-button')!;
+
+    button.click();
+    const request = httpTesting.expectOne(environment.replayControlUrl);
+    request.error(new ProgressEvent('error'));
+    fixture.detectChanges();
+
+    expect(button.getAttribute('aria-label')).toBe('Play replay');
+    expect(button.disabled).toBe(false);
+    expect(root.querySelector('.replay-error')).toBeNull();
     httpTesting.verify();
   });
 
@@ -1311,6 +1339,7 @@ describe('App dashboard', () => {
     root.querySelector<HTMLButtonElement>('[aria-label="Collapse left sidebar"]')!.click();
     fixture.detectChanges();
     expect(root.querySelector('[aria-label="Expand left sidebar"]')).toBeTruthy();
+    expect(root.querySelector('.left-sidebar .rail-label')?.textContent?.trim()).toBe('MARKET CONTEXT');
     expect(root.querySelector('[aria-label="Collapse right sidebar"]')).toBeTruthy();
 
     root.querySelector<HTMLButtonElement>('[aria-label="Expand left sidebar"]')!.click();
@@ -1318,6 +1347,7 @@ describe('App dashboard', () => {
     fixture.detectChanges();
     expect(root.querySelector('[aria-label="Collapse left sidebar"]')).toBeTruthy();
     expect(root.querySelector('[aria-label="Expand right sidebar"]')).toBeTruthy();
+    expect(root.querySelector('.right-sidebar .rail-label')?.textContent?.trim()).toBe('PERFORMANCE');
   });
 
   it('places report export beside replay controls and enables it at progress 2', async () => {
@@ -1328,8 +1358,7 @@ describe('App dashboard', () => {
     const exportButton = root.querySelector<HTMLButtonElement>('.export-button')!;
     const replayControls = root.querySelector('.replay-controls')!;
 
-    expect(replayControls.nextElementSibling?.classList.contains('toolbar-divider')).toBe(true);
-    expect(replayControls.nextElementSibling?.nextElementSibling).toBe(exportButton);
+    expect(replayControls.nextElementSibling).toBe(exportButton);
     expect(exportButton.getAttribute('aria-label')).toBe('Export Statistics');
     expect(exportButton.querySelector('svg')).toBeTruthy();
     expect(root.querySelector('.menu-button')).toBeNull();
@@ -1424,6 +1453,21 @@ describe('App dashboard', () => {
       'Report files are not ready for export',
     );
     expect(revokeObjectURL).not.toHaveBeenCalled();
+  });
+
+  it('links the dashboard navigation button to the multi-strategy monitor route', async () => {
+    const fixture = TestBed.createComponent(App);
+    await fixture.whenStable();
+    const root = fixture.nativeElement as HTMLElement;
+
+    expect(
+      root.querySelector<HTMLAnchorElement>('app-surface-navigation a')?.getAttribute('href'),
+    ).toBe('/multi-strategy-monitor');
+    expect(
+      root.querySelector('app-surface-navigation')?.nextElementSibling?.classList.contains(
+        'navigation-divider',
+      ),
+    ).toBe(true);
   });
 
   it('formats arbitrary backend candle intervals without rounding', () => {
@@ -2008,7 +2052,7 @@ describe('App dashboard', () => {
             pnl: 42.109,
             roi: 0,
             max_drawdown: 0.01234,
-            average_trade_duration: 3661,
+            profit_factor: '2.5',
           },
         },
       },
@@ -2032,8 +2076,9 @@ describe('App dashboard', () => {
     expect(statisticRow('ROI').querySelector('dd')?.textContent).toBe('0%');
     expect(statisticRow('ROI').querySelector('dd')?.classList.contains('positive')).toBe(true);
     expect(statisticRow('Max Drawdown').querySelector('dd')?.textContent).toBe('1.23%');
-    expect(statisticRow('Average Trade Duration').querySelector('dd')?.textContent).toBe(
-      '1:01:01',
+    expect(statisticRow('Profit Factor').querySelector('dd')?.textContent).toBe('2.5');
+    expect(statisticRow('Profit Factor').querySelector('dd')?.classList.contains('positive')).toBe(
+      true,
     );
     expect(root.querySelector('app-equity-curve')).toBeNull();
 
@@ -2044,13 +2089,31 @@ describe('App dashboard', () => {
         target: statisticsTarget,
         statistics: {
           winrate: null,
-          average_trade_duration: null,
+          profit_factor: '0.75',
         },
       },
     });
     fixture.detectChanges();
-    expect(statisticRow('Win Rate').querySelector('dd')?.textContent).toBe('—');
-    expect(statisticRow('Average Trade Duration').querySelector('dd')?.textContent).toBe('—');
+    expect(statisticRow('Win Rate').querySelector('dd')?.textContent).toBe('N/A');
+    expect(statisticRow('Win Rate').querySelector('dd')?.classList.contains('not-available')).toBe(true);
+    expect(statisticRow('Profit Factor').querySelector('dd')?.textContent).toBe('0.75');
+    expect(statisticRow('Profit Factor').querySelector('dd')?.classList.contains('negative')).toBe(
+      true,
+    );
+
+    socket.receive({
+      type: 'analysis_update',
+      data: {
+        analysis_type: 'statistics',
+        target: statisticsTarget,
+        statistics: { winrate: null, profit_factor: null },
+      },
+    });
+    fixture.detectChanges();
+    expect(statisticRow('Profit Factor').querySelector('dd')?.textContent).toBe('N/A');
+    expect(
+      statisticRow('Profit Factor').querySelector('dd')?.classList.contains('not-available'),
+    ).toBe(true);
 
     socket.receive({
       type: 'analysis_init',
@@ -2094,7 +2157,7 @@ describe('App dashboard', () => {
             pnl: -5.006,
             roi: -0.01556,
             max_drawdown: 0.03456,
-            average_trade_duration: 90061,
+            profit_factor: '1',
           },
         },
       },
@@ -2119,8 +2182,9 @@ describe('App dashboard', () => {
     expect(statisticRow('ROI').querySelector('dd')?.textContent).toBe('-1.56%');
     expect(statisticRow('ROI').querySelector('dd')?.classList.contains('negative')).toBe(true);
     expect(statisticRow('Max Drawdown').querySelector('dd')?.textContent).toBe('3.46%');
-    expect(statisticRow('Average Trade Duration').querySelector('dd')?.textContent).toBe(
-      '25:01:01',
+    expect(statisticRow('Profit Factor').querySelector('dd')?.textContent).toBe('1');
+    expect(statisticRow('Profit Factor').querySelector('dd')?.classList.contains('positive')).toBe(
+      true,
     );
     expect(root.querySelector('app-equity-curve')).toBeTruthy();
   });
@@ -2803,7 +2867,7 @@ describe('App dashboard', () => {
             pnl: 42.109,
             roi: 0.042,
             max_drawdown: 0.012,
-            average_trade_duration: null,
+            profit_factor: '2.5',
           },
         },
       },
@@ -2872,7 +2936,7 @@ describe('App dashboard', () => {
       { key: 'pnl', value: 42.109 },
       { key: 'roi', value: 0.042 },
       { key: 'max_drawdown', value: 0.012 },
-      { key: 'average_trade_duration', value: null },
+      { key: 'profit_factor', value: '2.5' },
     ]);
 
     socket.receive([

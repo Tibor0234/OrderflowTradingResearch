@@ -7,7 +7,7 @@ import {
   Timeframe,
   VolumeProfileResourceState,
 } from '../../../shared/models/market-data.models';
-import { CHART_PLOT_LEFT, CHART_PLOT_RIGHT, chartPointX } from '../../../shared/chart-layout';
+import { CHART_PLOT_LEFT, CHART_PLOT_RIGHT, chartPointX } from '../../chart-layout';
 
 interface CandleGlyph {
   candle: Candle;

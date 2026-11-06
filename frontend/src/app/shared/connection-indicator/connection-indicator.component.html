@@ -1,0 +1,4 @@
+<div class="connection-indicator">
+  <span class="live-dot" [class.connected]="connectionStatus() === 'connected'" aria-hidden="true"></span>
+  <span class="connection-status" [attr.data-status]="connectionStatus()">{{ connectionLabel() }}</span>
+</div>

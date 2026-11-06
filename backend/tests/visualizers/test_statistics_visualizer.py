@@ -43,7 +43,7 @@ def test_statistics_visualizer_initializes_and_sends_model_updates():
                     "pnl": "25",
                     "roi": "0.1",
                     "max_drawdown": "0",
-                    "average_trade_duration": 12.5,
+                    "profit_factor": "2.5",
                 },
             },
         )
@@ -58,9 +58,36 @@ def test_statistics_visualizer_initializes_and_sends_model_updates():
                     "pnl": "25",
                     "roi": "0.1",
                     "max_drawdown": "0",
-                    "average_trade_duration": 12.5,
+                    "profit_factor": "2.5",
                 },
             },
         )
+    finally:
+        event_bus.listeners[EventBusMsgType.WEBSOCKET_MESSAGE].remove(handler)
+
+
+def test_statistics_visualizer_sends_null_profit_factor_when_unavailable():
+    messages = []
+    handler = lambda *args: messages.append(args)
+    event_bus = EventBus()
+    event_bus.subscribe(EventBusMsgType.WEBSOCKET_MESSAGE, handler)
+    visualizer = StatisticsVisualizer(Statistics(type=AnalysisType.CUMULATIVE))
+
+    try:
+        visualizer.init_frontend()
+
+        assert messages[0][1] == {
+            "analysis_type": "statistics",
+            "target": "statistics/cumulative_None",
+            "name": "Full Run",
+            "snapshot": {
+                "total_trades": 0,
+                "winrate": None,
+                "pnl": "0",
+                "roi": "0",
+                "max_drawdown": "0",
+                "profit_factor": None,
+            },
+        }
     finally:
         event_bus.listeners[EventBusMsgType.WEBSOCKET_MESSAGE].remove(handler)

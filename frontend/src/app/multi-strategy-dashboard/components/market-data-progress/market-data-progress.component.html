@@ -1,0 +1,18 @@
+<section class="market-data-progress" aria-labelledby="processing-title">
+  <div class="section-heading">
+    <h2 id="processing-title">Progress</h2>
+    <strong class="progress-value">{{ progress().displayValue }}</strong>
+  </div>
+  <div class="progress-row">
+    <div
+      class="progress-track"
+      role="progressbar"
+      aria-label="Market Data Processing"
+      aria-valuemin="0"
+      aria-valuemax="100"
+      [attr.aria-valuenow]="progress().percentage"
+    >
+      <div class="progress-fill" [style.width.%]="progress().percentage"></div>
+    </div>
+  </div>
+</section>

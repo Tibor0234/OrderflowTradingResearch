@@ -1,5 +1,5 @@
 import { Component, Input, OnChanges } from '@angular/core';
-import { EquityPoint } from '../performance.models';
+import { EquityPoint } from './equity-curve.models';
 
 interface EquityTick {
   y: number;
@@ -20,6 +20,9 @@ interface EquityTimeTick {
 export class EquityCurveComponent implements OnChanges {
   @Input({ required: true }) points: readonly EquityPoint[] = [];
   @Input() startingBalance: number | null = null;
+  @Input() aspectRatio: number | null = null;
+  @Input() compactAxisLabels = false;
+  @Input() prominentValueLabels = false;
 
   protected linePath = '';
   protected areaPath = '';
@@ -41,12 +44,17 @@ export class EquityCurveComponent implements OnChanges {
     this.buildChart();
   }
 
-  protected equityLabelTopPercent(y: number): number {
-    const chartHeight = 190.3;
-    const svgHeight = 184;
-    const topPadding = 6;
-    const svgHeightInChart = chartHeight - topPadding - 4;
-    return ((topPadding + (y / svgHeight) * svgHeightInChart) / chartHeight) * 100;
+  protected equityLabelTop(y: number): string {
+    const progress = y / 184;
+    if (this.aspectRatio === null) {
+      const chartHeight = 190.3;
+      const svgHeightInChart = chartHeight - 10;
+      return `${((6 + progress * svgHeightInChart) / chartHeight) * 100}%`;
+    }
+
+    const paddingOffset = 6 - progress * 10;
+    const offsetOperator = paddingOffset >= 0 ? '+' : '-';
+    return `calc(${progress * 100}% ${offsetOperator} ${Math.abs(paddingOffset)}px)`;
   }
 
   protected formatCurrentEquity(value: number): string {

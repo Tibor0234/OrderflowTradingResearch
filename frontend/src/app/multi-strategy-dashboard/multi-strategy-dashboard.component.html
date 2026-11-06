@@ -1,0 +1,92 @@
+<div class="monitor-page">
+  <header class="monitor-header">
+    <div class="multi-header-controls">
+      <app-surface-navigation target="/" label="Open single-strategy monitor" />
+      <span class="toolbar-divider navigation-divider" aria-hidden="true"></span>
+      <div class="multi-replay-controls">
+        <button
+          class="play-button multi-play-button"
+          type="button"
+          [attr.aria-label]="replayPlaying() ? 'Pause replay' : 'Play replay'"
+          [disabled]="replayRequestPending()"
+          [attr.aria-busy]="replayRequestPending()"
+          (click)="toggleReplay()"
+        >
+          <span aria-hidden="true">{{ replayPlaying() ? '❚❚' : '▶' }}</span>
+        </button>
+        <button
+          class="export-button"
+          type="button"
+          disabled
+          aria-label="Export Statistics"
+          title="Export Statistics"
+        >
+          <svg aria-hidden="true" viewBox="0 0 24 24">
+            <path d="M12 3v12m0 0 4-4m-4 4-4-4M5 17v4h14v-4" />
+          </svg>
+        </button>
+      </div>
+      @if (replayRequestError(); as replayError) {
+        <span class="replay-error" role="alert">{{ replayError }}</span>
+      }
+    </div>
+    <app-connection-indicator />
+  </header>
+  <div
+    class="monitor-workspace"
+    [class.parameter-combinations-collapsed]="parameterCombinationsCollapsed()"
+  >
+    <main class="monitor-content" aria-label="Multi-strategy monitoring workspace">
+      <app-strategy-overview [strategy]="strategy" [progress]="marketDataProgress" />
+
+      @if (displayedCombination(); as combination) {
+        <app-best-combination
+          [combination]="combination"
+          [rank]="rankedCombinations().indexOf(combination) + 1"
+        />
+      }
+    </main>
+    <aside class="sidebar right-sidebar parameter-sidebar" aria-label="Parameter combinations">
+      @if (parameterCombinationsCollapsed()) {
+        <button
+          class="collapsed-rail"
+          type="button"
+          aria-label="Expand parameter combinations"
+          title="Expand parameter combinations"
+          (click)="parameterCombinationsCollapsed.set(false)"
+        >
+          <span aria-hidden="true">‹</span>
+          <span class="rail-label">PARAMETER COMBINATIONS</span>
+        </button>
+      } @else {
+        <div class="sidebar-heading">
+          <span>PARAMETER COMBINATIONS</span>
+          <button
+            class="icon-button collapse-button"
+            type="button"
+            aria-label="Collapse parameter combinations"
+            title="Collapse parameter combinations"
+            (click)="parameterCombinationsCollapsed.set(true)"
+          >›</button>
+        </div>
+        <div class="sidebar-scroll parameter-panels">
+          @if (bestCombination(); as best) {
+            <button
+              class="select-top-button"
+              type="button"
+              title="Keep the highest-ranked combination selected as rankings update"
+              [attr.aria-pressed]="autoSelectTopCombination()"
+              (click)="toggleTopCombinationSelection()"
+            >Auto-select Top Combination</button>
+            <app-other-combinations-table
+              [combinations]="rankedCombinations()"
+              [bestCombinationId]="best.id"
+              [selectedCombinationId]="highlightedCombinationId()"
+              (combinationSelected)="selectCombination($event)"
+            />
+          }
+        </div>
+      }
+    </aside>
+  </div>
+</div>
