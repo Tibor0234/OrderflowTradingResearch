@@ -16,9 +16,11 @@ from trading.market_entities.utils import Side
 
 
 class TradeExcelExporter:
-    """Exports closed trades to an Excel workbook, grouped by session pair."""
+    """Exports closed trades from all session pairs to one Excel worksheet."""
 
     HEADERS = [
+        "Session",
+        "Symbol",
         "Is Shadow",
         "Side",
         "Avg Entry Price",
@@ -31,8 +33,7 @@ class TradeExcelExporter:
         "Close Time",
         "Duration",
     ]
-    INVALID_SHEET_CHARS = str.maketrans({char: "-" for char in "\\/*?:[]"})
-    FILTER_HEADERS = {"Is Shadow", "Side"}
+    FILTER_HEADERS = {"Session", "Symbol", "Is Shadow"}
     CURRENCY_HEADERS = {"Invested Margin", "Realized PnL", "Fees Paid"}
     DURATION_HEADER = "Duration"
     CURRENCY_FORMAT = '$#,##0.00;-$#,##0.00'
@@ -49,6 +50,8 @@ class TradeExcelExporter:
     SHADOW_LONG_COLOR = "FF70AD47"
     SHADOW_SHORT_COLOR = "FFD07070"
     HEADER_WIDTHS = {
+        "Session": 14,
+        "Symbol": 16,
         "Is Shadow": 12,
         "Side": 12,
         "Avg Entry Price": 18,
@@ -68,6 +71,7 @@ class TradeExcelExporter:
         self.export_shadow_trades = export_shadow_trades
         self.session_counter = session_counter
         self.session_trades: list[Trade] = []
+        self.metadata_keys: list[str] = []
 
         self.workbook = Workbook()
         self.workbook.remove(self.workbook.active)
@@ -82,18 +86,25 @@ class TradeExcelExporter:
             self.session_trades.append(trade)
 
     def _on_session_pair_end(self):
-        """Export the current session pair's trades to a dedicated worksheet."""
+        """Append the current session pair's trades to the shared worksheet."""
         symbol = DataProvider().get_symbol()
-        session_number = self.session_counter.session if self.session_counter else len(self.workbook.sheetnames) + 1
-        sheet_name = f"Session {session_number} - {symbol}".translate(self.INVALID_SHEET_CHARS)[:31]
-        sheet = self.workbook.create_sheet(title=sheet_name)
-        metadata_keys = list(dict.fromkeys(
-            key for trade in self.session_trades for key in trade.metadata
-        ))
-        sheet.append(self.HEADERS + metadata_keys)
+        session_number = self.session_counter.session
+        if not self.workbook.sheetnames:
+            sheet = self.workbook.create_sheet(title="Trades")
+            sheet.append(self.HEADERS)
+        else:
+            sheet = self.workbook["Trades"]
+
+        for trade in self.session_trades:
+            for key in trade.metadata:
+                if key not in self.metadata_keys:
+                    self.metadata_keys.append(key)
+                    sheet.cell(row=1, column=len(self.HEADERS) + len(self.metadata_keys), value=key)
 
         for trade in self.session_trades:
             sheet.append([
+                session_number,
+                symbol,
                 trade.is_shadow,
                 "LONG" if trade.side == Side.BUY else "SHORT",
                 self._round_to_two_decimals(trade.execution_price),
@@ -109,7 +120,7 @@ class TradeExcelExporter:
                     self._format_metadata_value(
                         trade.metadata.get(key)
                     )
-                    for key in metadata_keys
+                    for key in self.metadata_keys
                 ],
             ])
 
@@ -205,6 +216,10 @@ class TradeExcelExporter:
                 elif (
                     isinstance(cell.value, (int, float))
                     and not isinstance(cell.value, bool)
+                    and not (
+                        cell.column <= len(self.HEADERS)
+                        and header == "Session"
+                    )
                 ):
                     cell.value = self._round_to_two_decimals(cell.value)
                     cell.number_format = self.NUMBER_FORMAT

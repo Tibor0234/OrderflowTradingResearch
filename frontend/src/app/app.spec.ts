@@ -1288,7 +1288,7 @@ describe('App dashboard', () => {
     expect(Array.from(root.querySelectorAll('app-oscillator-panel h2'), (heading) => heading.textContent?.trim())).toEqual(['Volume Delta', 'CVD']);
   });
 
-  it('closes replay settings and the dashboard menu when clicking elsewhere', async () => {
+  it('closes replay settings when clicking elsewhere', async () => {
     const fixture = TestBed.createComponent(App);
     await fixture.whenStable();
     const root = fixture.nativeElement as HTMLElement;
@@ -1301,13 +1301,6 @@ describe('App dashboard', () => {
     fixture.detectChanges();
     expect(root.querySelector('.auto-stop-settings')).toBeNull();
 
-    root.querySelector<HTMLButtonElement>('.menu-button')!.click();
-    fixture.detectChanges();
-    expect(root.querySelector('.dashboard-menu')).toBeTruthy();
-
-    root.querySelector<HTMLElement>('.session-summary')!.click();
-    fixture.detectChanges();
-    expect(root.querySelector('.dashboard-menu')).toBeNull();
   });
 
   it('collapses and reopens each sidebar independently', async () => {
@@ -1327,19 +1320,20 @@ describe('App dashboard', () => {
     expect(root.querySelector('[aria-label="Expand right sidebar"]')).toBeTruthy();
   });
 
-  it('opens the dashboard menu and enables report export at progress 2', async () => {
+  it('places report export beside replay controls and enables it at progress 2', async () => {
     const fixture = TestBed.createComponent(App);
     await fixture.whenStable();
     const root = fixture.nativeElement as HTMLElement;
     const socket = FakeWebSocket.instances[0];
-    const menuButton = root.querySelector<HTMLButtonElement>('.menu-button')!;
+    const exportButton = root.querySelector<HTMLButtonElement>('.export-button')!;
+    const replayControls = root.querySelector('.replay-controls')!;
 
-    menuButton.click();
-    fixture.detectChanges();
-
-    expect(menuButton.getAttribute('aria-expanded')).toBe('true');
-    expect(root.querySelector('.dashboard-menu')).toBeTruthy();
-    expect(root.querySelector<HTMLButtonElement>('.dashboard-menu-item')?.disabled).toBe(true);
+    expect(replayControls.nextElementSibling?.classList.contains('toolbar-divider')).toBe(true);
+    expect(replayControls.nextElementSibling?.nextElementSibling).toBe(exportButton);
+    expect(exportButton.getAttribute('aria-label')).toBe('Export Statistics');
+    expect(exportButton.querySelector('svg')).toBeTruthy();
+    expect(root.querySelector('.menu-button')).toBeNull();
+    expect(exportButton.disabled).toBe(true);
     expect(root.querySelector('[aria-label="Collapse left sidebar"]')).toBeTruthy();
 
     socket.receive({
@@ -1352,7 +1346,7 @@ describe('App dashboard', () => {
       },
     });
     fixture.detectChanges();
-    expect(root.querySelector<HTMLButtonElement>('.dashboard-menu-item')?.disabled).toBe(true);
+    expect(exportButton.disabled).toBe(true);
 
     socket.receive({
       type: 'session_start',
@@ -1364,7 +1358,7 @@ describe('App dashboard', () => {
       },
     });
     fixture.detectChanges();
-    expect(root.querySelector<HTMLButtonElement>('.dashboard-menu-item')?.disabled).toBe(false);
+    expect(exportButton.disabled).toBe(false);
   });
 
   it('downloads the reports ZIP and displays an export conflict error', async () => {
@@ -1412,9 +1406,7 @@ describe('App dashboard', () => {
         ),
     );
 
-    root.querySelector<HTMLButtonElement>('.menu-button')!.click();
-    fixture.detectChanges();
-    root.querySelector<HTMLButtonElement>('.dashboard-menu-item')!.click();
+    root.querySelector<HTMLButtonElement>('.export-button')!.click();
     await fixture.whenStable();
     fixture.detectChanges();
 
@@ -1422,11 +1414,8 @@ describe('App dashboard', () => {
     expect(createObjectURL).toHaveBeenCalledWith(expect.any(Blob));
     expect(linkClick).toHaveBeenCalledOnce();
     expect(downloadedFilenames).toEqual(['reports-1.zip']);
-    expect(root.querySelector('.dashboard-menu')).toBeNull();
 
-    root.querySelector<HTMLButtonElement>('.menu-button')!.click();
-    fixture.detectChanges();
-    root.querySelector<HTMLButtonElement>('.dashboard-menu-item')!.click();
+    root.querySelector<HTMLButtonElement>('.export-button')!.click();
     await fixture.whenStable();
     fixture.detectChanges();
 

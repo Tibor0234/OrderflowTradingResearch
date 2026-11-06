@@ -135,75 +135,6 @@ app-root {
   color: var(--text-primary);
 }
 
-.menu-glyph {
-  display: grid;
-  gap: 3px;
-  width: 13px;
-}
-
-.menu-glyph i {
-  height: 1.5px;
-  border-radius: 2px;
-  background: currentColor;
-}
-
-.menu-glyph i:nth-child(2) {
-  width: 9px;
-}
-
-.topbar-menu {
-  position: relative;
-}
-
-.menu-button[aria-expanded='true'] {
-  background: var(--surface-3);
-  color: var(--green);
-}
-
-.dashboard-menu {
-  position: absolute;
-  z-index: 5;
-  top: calc(100% + 8px);
-  left: 0;
-  display: grid;
-  min-width: 190px;
-  padding: 6px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  background: var(--surface-2);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
-  color: var(--text-primary);
-}
-
-.dashboard-menu-item {
-  padding: 8px 10px;
-  border: 0;
-  border-radius: 4px;
-  background: transparent;
-  color: inherit;
-  cursor: pointer;
-  font: inherit;
-  text-align: left;
-  white-space: nowrap;
-}
-
-.dashboard-menu-item:hover:not(:disabled) {
-  background: var(--surface-3);
-  color: var(--green);
-}
-
-.dashboard-menu-item:disabled {
-  color: var(--text-muted);
-  cursor: not-allowed;
-}
-
-.dashboard-menu-error {
-  padding: 6px 10px 4px;
-  color: var(--red);
-  font-size: var(--font-xs);
-  white-space: normal;
-}
-
 .session-count {
   white-space: nowrap;
 }
@@ -378,6 +309,53 @@ app-root {
 }
 
 .replay-error {
+  color: var(--red);
+  font-size: var(--font-xs);
+}
+
+.export-divider {
+  height: 24px;
+  margin: 0 2px;
+}
+
+.export-button {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid #176b53;
+  border-radius: 5px;
+  background: rgba(25, 201, 149, 0.08);
+  color: var(--green);
+  cursor: pointer;
+  font: inherit;
+}
+
+.export-button svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+
+.export-button:hover:not(:disabled) {
+  border-color: rgba(25, 201, 149, 0.45);
+  background: rgba(25, 201, 149, 0.16);
+  color: var(--green);
+}
+
+.export-button:disabled {
+  border-color: var(--border);
+  background: var(--surface-2);
+  color: var(--text-muted);
+  cursor: not-allowed;
+}
+
+.export-error {
   color: var(--red);
   font-size: var(--font-xs);
 }

@@ -117,7 +117,6 @@ export class App {
   protected readonly replayRequestError = signal<string | null>(null);
   protected readonly autoStopSettingsExpanded = signal(false);
   protected readonly autoStopEvents = signal({ tradeOpen: false, orderPlaced: false });
-  protected readonly menuExpanded = signal(false);
   protected readonly reportExportPending = signal(false);
   protected readonly reportExportError = signal<string | null>(null);
   protected readonly timeframes = this.marketSocket.timeframes;
@@ -347,17 +346,7 @@ export class App {
     minHeight: 'clamp(140px, 24dvh, 220px)',
   }));
 
-  protected toggleMenu(): void {
-    this.menuExpanded.update((expanded) => !expanded);
-    this.reportExportError.set(null);
-  }
-
-  protected closeMenu(): void {
-    this.menuExpanded.set(false);
-  }
-
   protected closeOverlays(): void {
-    this.menuExpanded.set(false);
     this.autoStopSettingsExpanded.set(false);
   }
 
@@ -368,7 +357,6 @@ export class App {
       return;
     }
 
-    if (!target.closest('.topbar-menu')) this.menuExpanded.set(false);
     if (!target.closest('.auto-stop-settings, .auto-stop-settings-button')) {
       this.autoStopSettingsExpanded.set(false);
     }
@@ -405,7 +393,6 @@ export class App {
       link.click();
       link.remove();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
-      this.closeMenu();
     } catch (error: unknown) {
       this.reportExportError.set(
         error instanceof Error ? error.message : 'Export failed.',

@@ -1,34 +1,6 @@
 <div class="dashboard">
   <header class="topbar">
     <div class="topbar-controls">
-      <div class="topbar-menu">
-        <button
-          class="icon-button menu-button"
-          type="button"
-          aria-label="Open dashboard menu"
-          title="Open menu"
-          aria-haspopup="menu"
-          aria-controls="dashboard-menu"
-          [attr.aria-expanded]="menuExpanded()"
-          (click)="toggleMenu()"
-        >
-          <span class="menu-glyph" aria-hidden="true"><i></i><i></i><i></i></span>
-        </button>
-        @if (menuExpanded()) {
-          <div class="dashboard-menu" id="dashboard-menu" role="menu" aria-label="Dashboard menu">
-            <button
-              class="dashboard-menu-item"
-              type="button"
-              role="menuitem"
-              [disabled]="exportStatisticsDisabled() || reportExportPending()"
-              (click)="exportStatistics()"
-            >Export Statistics</button>
-            @if (reportExportError(); as exportError) {
-              <span class="dashboard-menu-error" role="alert">{{ exportError }}</span>
-            }
-          </div>
-        }
-      </div>
       <div class="replay-controls">
         <button
           class="play-button"
@@ -93,6 +65,23 @@
       </div>
       @if (replayRequestError(); as replayError) {
         <span class="replay-error" role="alert">{{ replayError }}</span>
+      }
+      <span class="toolbar-divider export-divider" aria-hidden="true"></span>
+      <button
+        class="export-button"
+        type="button"
+        aria-label="Export Statistics"
+        title="Export Statistics"
+        [disabled]="exportStatisticsDisabled() || reportExportPending()"
+        [attr.aria-busy]="reportExportPending()"
+        (click)="exportStatistics()"
+      >
+        <svg aria-hidden="true" viewBox="0 0 24 24">
+          <path d="M12 3v12m0 0 4-4m-4 4-4-4M5 17v4h14v-4" />
+        </svg>
+      </button>
+      @if (reportExportError(); as exportError) {
+        <span class="export-error" role="alert">{{ exportError }}</span>
       }
     </div>
     <div class="session-summary">

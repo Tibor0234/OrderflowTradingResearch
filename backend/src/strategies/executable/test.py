@@ -3,7 +3,7 @@ from strategies.core.essentials import *
 class TestStrategy(BaseStrategy):
 
     def on_candle_close(self, candle_sec):
-        
+        return
         if self.fw.is_trade_open() or self.fw.is_order_pending():
             return
 
